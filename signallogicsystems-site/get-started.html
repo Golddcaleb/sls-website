@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Started — Signal Logic Systems</title>
+  <meta name="description" content="Two ways to begin with SLS: get a free operational snapshot or book a 30-minute demo call. No commitment required.">
+  <link rel="icon" href="signallogicsystems-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════ -->
+<nav class="site-nav" id="siteNav">
+  <div class="container">
+    <div class="nav-inner">
+
+      <a href="index.html" class="nav-logo">
+        <img src="signallogicsystems-icon.png" alt="Signal Logic Systems icon" class="nav-logo-img">
+        <div class="nav-logo-text">
+          <span class="nav-logo-main">SignalLogic</span>
+          <span class="nav-logo-sub">Systems LLC</span>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="solutions.html">Solutions</a></li>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="get-started.html">Get Started</a></li>
+      </ul>
+
+      <div class="nav-right">
+        <a href="get-started.html" class="btn btn-primary btn-sm">Book a Demo</a>
+      </div>
+
+      <button class="hamburger" aria-label="Toggle navigation menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a href="index.html">Home</a>
+  <a href="solutions.html">Solutions</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="get-started.html">Get Started</a>
+  <a href="get-started.html" class="btn btn-primary mobile-cta">Book a Demo</a>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE HERO
+     ═══════════════════════════════════════════════════════ -->
+<main>
+<section class="page-hero grid-texture">
+  <div class="container">
+    <span class="section-label">Begin Here</span>
+    <h1>Get Started with SLS</h1>
+    <p>Two ways to begin. Choose the path that fits where you are.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     TWO-PATH LAYOUT
+     ═══════════════════════════════════════════════════════ -->
+<section id="snapshot">
+  <div class="container">
+    <div class="get-started-grid">
+
+      <!-- ─── PATH A: FREE SNAPSHOT ──────────────────────── -->
+      <div class="path-card">
+        <span class="badge badge-free">Free &mdash; No Commitment</span>
+        <h2>Get a Free Operational Snapshot</h2>
+        <p class="path-desc">
+          Send us a basic export of your current job or PO data and we'll run it through our diagnostic
+          engine and deliver a snapshot report showing your constraint, revenue at risk, and top delayed
+          jobs. We'll walk through it with you on a 30-minute call.
+        </p>
+
+        <!-- Success state (shown after form submit) -->
+        <div class="form-success" id="formSuccess">
+          <div class="form-success-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="24" r="23" stroke="#F4C542" stroke-width="2"/>
+              <path d="M14 24l8 8 12-16" stroke="#F4C542" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>Request received.</h3>
+          <p>We'll review your information and reach out within 1 business day to confirm next steps.</p>
+        </div>
+
+        <!-- Snapshot request form -->
+        <form id="snapshotForm" novalidate>
+
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" name="fullName" placeholder="Jane Smith" required>
+          </div>
+
+          <div class="form-group">
+            <label for="company">Company Name</label>
+            <input type="text" id="company" name="company" placeholder="Acme Manufacturing" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="jane@acmemfg.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone <span class="optional">(optional)</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="(330) 555-0100">
+          </div>
+
+          <div class="form-group">
+            <label for="erp">What ERP or job management system do you use?</label>
+            <input type="text" id="erp" name="erp" placeholder="e.g. JobBOSS, Epicor, QuickBooks, spreadsheets..." required>
+          </div>
+
+          <div class="form-group">
+            <label for="jobVolume">Approx. how many active jobs per month?</label>
+            <select id="jobVolume" name="jobVolume" required>
+              <option value="" disabled selected>Select a range</option>
+              <option value="under50">Under 50</option>
+              <option value="50-150">50 – 150</option>
+              <option value="150-300">150 – 300</option>
+              <option value="300+">300+</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="toolInterest">Which tool are you most interested in?</label>
+            <select id="toolInterest" name="toolInterest" required>
+              <option value="" disabled selected>Select a tool</option>
+              <option value="job-flow">Job Flow Monitor</option>
+              <option value="po-tracking">PO Tracking &amp; Automated Follow-Up</option>
+              <option value="not-sure">Not sure yet</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="painPoint">Tell us about your biggest operational pain point</label>
+            <textarea id="painPoint" name="painPoint" rows="4" placeholder="What's the problem that keeps coming back? What's costing you the most time or money?"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="dataUpload">
+              Upload a sample data export (CSV or Excel)
+              <span class="optional">&mdash; optional</span>
+            </label>
+            <input type="file" id="dataUpload" name="dataUpload" accept=".csv,.xlsx,.xls,.txt">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm form-submit-btn">
+            Request My Free Snapshot &rarr;
+          </button>
+
+          <p class="form-privacy">
+            We do not store or share your data. Your export is processed and deleted after your snapshot is delivered.
+          </p>
+
+        </form>
+      </div><!-- /PATH A -->
+
+
+      <!-- ─── PATH B: BOOK A DEMO CALL ──────────────────── -->
+      <div class="path-card">
+        <span class="badge badge-call">30-Minute Call</span>
+        <h2>Book a Demo Call</h2>
+        <p class="path-desc">
+          See the Job Flow Monitor in action with sample data and ask any questions about how SLS
+          would work for your specific operation.
+        </p>
+
+        <!-- Calendly inline widget begin -->
+        <div style="margin-top:1.75rem; border-radius:var(--card-radius); overflow:hidden;">
+          <div class="calendly-inline-widget"
+            data-url="https://calendly.com/hello-signallogicsystems?hide_landing_page_details=1&hide_gdpr_banner=1&background_color=141418&text_color=F8F9FA&primary_color=F4C542"
+            style="min-width:320px;height:700px;">
+          </div>
+          <script type="text/javascript"
+            src="https://assets.calendly.com/assets/external/widget.js"
+            async></script>
+        </div>
+        <!-- Calendly inline widget end -->
+
+        <div style="margin-top:2rem; padding:1.5rem; background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:var(--card-radius);">
+          <p style="font-size:.85rem; color:var(--text-secondary); line-height:1.7;">
+            Prefer to call? Reach us at
+            <a href="tel:+13303036511" style="color:var(--gold);">(330) 303-6511</a>
+            or email <a href="mailto:hello@signallogicsystems.com" style="color:var(--gold);">hello@signallogicsystems.com</a>.
+            We're based in Ohio and respond within 1 business day.
+          </p>
+        </div>
+      </div><!-- /PATH B -->
+
+    </div><!-- /grid -->
+
+
+    <!-- ─── WHAT HAPPENS NEXT ─────────────────────────── -->
+    <div class="next-steps">
+      <h2>What happens next</h2>
+      <div class="next-steps-grid">
+
+        <div class="next-step-item">
+          <div class="next-step-num">1</div>
+          <h4>We review your information</h4>
+          <p>We look at what you've sent and confirm we have everything needed to run your diagnostic. We'll reach out within 1 business day.</p>
+        </div>
+
+        <div class="next-step-item">
+          <div class="next-step-num">2</div>
+          <h4>We run your data</h4>
+          <p>Your export goes through our diagnostic engine. We identify your constraint, calculate revenue at risk, and rank delayed jobs.</p>
+        </div>
+
+        <div class="next-step-item">
+          <div class="next-step-num">3</div>
+          <h4>We walk through the results</h4>
+          <p>We schedule a 30-minute call to present your operational snapshot, answer questions, and discuss whether ongoing service makes sense.</p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+
+      <div class="footer-brand">
+        <a href="index.html" class="footer-logo-link">
+          <img src="signallogicsystems-logo.png" alt="Signal Logic Systems" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline">Turn operational chaos into clear, actionable signals.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="solutions.html">Solutions</a></li>
+          <li><a href="how-it-works.html">How It Works</a></li>
+          <li><a href="get-started.html">Get Started</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <div class="footer-contact-list">
+          <a href="mailto:hello@signallogicsystems.com">hello@signallogicsystems.com</a>
+          <a href="tel:+13303036511">(330) 303-6511</a>
+          <span>Ohio, USA</span>
+          <a href="https://signallogicsystems.com">signallogicsystems.com</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 Signal Logic Systems LLC. All rights reserved.</p>
+      <p>No client data is stored by Signal Logic Systems.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
