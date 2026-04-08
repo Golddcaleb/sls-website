@@ -1,3 +1,6 @@
 .DS_Store
 *.log
 node_modules/
+
+# Sample/demo data — keep out of public repo
+sample-data/
