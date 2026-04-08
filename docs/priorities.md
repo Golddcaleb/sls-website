@@ -24,13 +24,13 @@
    Homepage video placeholder needs real content.  
    Status: Not started
 
-## Next Actions (from this session)
+## Known Issues (Non-Urgent)
 
+- **Inbound email needs troubleshooting** — MX records are live in Netlify but confirmation emails to hello@signallogicsystems.com are not arriving (e.g. GitHub). Likely Google Workspace quarantine or spam filter setting. Revisit after first customer.
+
+## Next Actions
+
+- Set up GitHub repo and push codebase
+- Connect GitHub repo to Netlify and verify live deployment
 - Test dashboard.js with a real JobBOSS CSV export
 - Build Phase 2: Netlify Function endpoint with HMAC-SHA256 auth
-- Resolve open questions in docs/jfm-architecture.md:
-  - Column mapping fallback UI behavior
-  - Stage ordering configuration approach
-  - Phase 2 report delivery method (inline JSON vs. signed URL)
-  - Customer ID encoding for multi-tenant use
-  - Define minimum viable CSV column set

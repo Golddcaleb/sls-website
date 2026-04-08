@@ -194,6 +194,43 @@
 
     .map-select:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 
+    .mapping-guidance {
+      margin: 1.5rem 0 1.25rem;
+      padding: 1rem 1.25rem;
+      background: rgba(244, 197, 66, .04);
+      border: 1px solid rgba(244, 197, 66, .12);
+      border-radius: 8px;
+      font-size: .85rem;
+    }
+
+    .guide-header {
+      color: var(--text-secondary);
+      font-size: .82rem;
+      margin-bottom: .75rem;
+    }
+
+    .guide-row {
+      display: flex;
+      gap: 1rem;
+      padding: .3rem 0;
+      border-bottom: 1px solid rgba(43, 47, 54, .5);
+    }
+
+    .guide-row:last-child { border-bottom: none; }
+
+    .guide-field {
+      color: var(--gold);
+      width: 130px;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .guide-variants {
+      color: var(--text-secondary);
+      font-family: monospace;
+      font-size: .8rem;
+    }
+
     .mapping-error {
       color: #f87171;
       font-size: .88rem;
@@ -525,6 +562,8 @@
 
       <div class="mapping-subhead">Map Missing Fields</div>
       <div class="mapping-fields" id="mappingFields"></div>
+
+      <div class="mapping-guidance" id="mappingGuidance"></div>
 
       <div class="mapping-error" id="mappingError"></div>
 

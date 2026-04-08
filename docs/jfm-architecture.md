@@ -322,22 +322,35 @@ Paid tier ($19/month) supports millions of function invocations if needed.
 
 ---
 
-## 10. Open Questions (Resolve Before Phase 1 Build)
+## 10. Architecture Decisions (Resolved)
 
-1. **Column mapping fallback:** If auto-detection fails, should the Phase 1 browser tool
-   show a dropdown UI for manual column mapping, or display an error listing missing fields?
+1. **Column mapping fallback:** Phase 1 browser tool shows a manual dropdown UI when
+   auto-detection fails. Alongside the dropdowns, inline guidance explains the expected
+   column names and formats so customers can correct their export once and never see the
+   dropdown again. This doubles as onboarding education.
 
-2. **Stage ordering:** Should the engine infer stage sequence from median job age (automatic),
-   or should onboarding include a one-time stage sequence configuration step (explicit)?
+2. **Stage ordering:** Onboarding includes a one-time explicit stage sequence configuration
+   step. The customer defines their production sequence during setup. This produces more
+   accurate cascade analysis than inference and signals that SLS tailors the tool to their
+   operation specifically.
 
-3. **Report delivery in Phase 2:** Direct download in HTTP response, or a time-limited
-   (24-hour) hosted URL that auto-expires?
+3. **Report delivery in Phase 2:** Direct download via HTTP response body. The function
+   returns the HTML report as the response with `Content-Disposition: attachment`. Nothing
+   is stored on SLS infrastructure. If a connection drops mid-download, the customer
+   resubmits — a 30-second operation and not an SLS infrastructure concern. The added
+   complexity and liability of temporary hosted URLs is not justified.
 
-4. **Customer identification in Phase 2:** Should the HMAC key encode a customer ID so
-   the report header auto-populates the correct company name?
+4. **Customer identification in Phase 2:** The HMAC secret encodes the customer ID.
+   When the function verifies the signature, it resolves the customer identity and
+   auto-populates the report header with their company name. Additionally, a logo file
+   collected at onboarding is stored server-side keyed to the customer ID — when their
+   HMAC is verified, the report renderer pulls their logo into the header, giving the
+   report a white-label feel at no extra cost to the customer.
 
-5. **Minimum viable CSV:** Proposed minimum required columns to produce a useful report:
-   `job_number`, `stage`, `due_date`, `job_value`. Confirm or adjust.
+5. **Minimum viable CSV:** Required fields to produce a useful report: `job_number`,
+   `stage`, `due_date`, `job_value`. Additional fields (`customer`, `qty_ordered`,
+   `qty_shipped`, `part_number`, `description`) enhance the report but are not required
+   for core diagnostics.
 
 ---
 

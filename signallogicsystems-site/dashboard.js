@@ -386,6 +386,31 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>`;
     }).join('');
 
+    // Formatting guidance — teach the customer how to avoid this next time
+    const TOP_VARIANTS = {
+      job_number:  'Job, Job_Number, JobNo, WO, Work_Order',
+      customer:    'Customer, Customer_Name, Cust_Name, Cust',
+      stage:       'Status, Job_Status, Current_Op, Work_Center, Operation',
+      due_date:    'Due_Date, Due Date, Req_Date, Ship_Date, Promise_Date',
+      order_date:  'Order_Date, Start_Date, Open_Date, Date_Opened',
+      job_value:   'Est_Total_Price, Total_Price, Revenue, Price, Ext_Price',
+      qty_ordered: 'Qty_Ordered, Order_Qty, Quantity, Qty',
+      part_number: 'Part, Part_Number, Part_No, PartNo',
+      description: 'Description, Part_Desc, Desc, Item_Desc',
+    };
+
+    const guidanceEl = document.getElementById('mappingGuidance');
+    const guidanceRows = missingFields.map(field =>
+      `<div class="guide-row">
+        <span class="guide-field">${labels[field] || field}</span>
+        <span class="guide-variants">${TOP_VARIANTS[field] || ''}</span>
+      </div>`
+    ).join('');
+    guidanceEl.innerHTML = `
+      <div class="guide-header">To skip this step on future exports, rename the undetected columns to one of these accepted names:</div>
+      ${guidanceRows}
+    `;
+
     document.getElementById('applyMappingBtn').onclick = applyMapping;
     document.getElementById('backToUploadBtn').onclick = resetToUpload;
   }
@@ -666,12 +691,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.getElementById('resetBtn')?.addEventListener('click', resetToUpload);
   document.getElementById('resetBtn2')?.addEventListener('click', resetToUpload);
-
-  function dropMsgDefault() {
-    return `<span class="drop-icon">&#8679;</span>
-            <strong>Drag &amp; drop your CSV here</strong>
-            <span>or click to browse</span>`;
-  }
 
   // ─── Print / Export ───────────────────────────────────────
 
