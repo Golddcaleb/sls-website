@@ -210,6 +210,9 @@ const JFM = (() => {
     const hasValue   = active.some(j => j.job_value !== null);
     const hasDueDate = active.some(j => j.due_date !== null);
 
+    const firstCustomer = jobs.find(j => j.customer);
+    const customerName  = firstCustomer ? firstCustomer.customer : null;
+
     return {
       totalRecords: rows.length,
       totalJobs: active.length,
@@ -228,6 +231,7 @@ const JFM = (() => {
       hasValue,
       hasDueDate,
       upstreamStages,
+      customerName,
       reportDate: new Date(),
     };
   }
@@ -450,6 +454,18 @@ document.addEventListener('DOMContentLoaded', function () {
     renderTable(metrics);
     renderSummary(metrics);
 
+    // Scrub raw data from memory — raw job records must not remain inspectable
+    parsedRows = [];
+    metrics.priorityJobs = metrics.priorityJobs.map(j => ({
+      job_number:   j.job_number,
+      customer:     j.customer,
+      stage:        j.stage,
+      job_value:    j.job_value,
+      days_overdue: j.days_overdue,
+      score:        j.score,
+      is_past_due:  j.is_past_due,
+    }));
+
     // Scroll to dashboard
     dashSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -485,6 +501,15 @@ document.addEventListener('DOMContentLoaded', function () {
       m.reportDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('reportRecords').textContent =
       `${m.totalRecords} records processed — ${m.totalJobs} active jobs`;
+
+    const customerLine = document.getElementById('reportCustomerLine');
+    const customerSpan = document.getElementById('reportCustomer');
+    if (m.customerName) {
+      customerSpan.textContent = m.customerName;
+      customerLine.style.display = '';
+    } else {
+      customerLine.style.display = 'none';
+    }
   }
 
   // ─── Charts ───────────────────────────────────────────────
@@ -511,8 +536,10 @@ document.addEventListener('DOMContentLoaded', function () {
       s === m.constraint ? CHART_DEFAULTS.colorAlertH : CHART_DEFAULTS.colorHover
     );
 
-    // Chart 1: Jobs per stage
+    // Chart 1: Jobs per stage (horizontal)
     const ctx1 = document.getElementById('chartConstraint').getContext('2d');
+    const opts1 = chartOptions('Active Jobs by Stage', 'Jobs');
+    opts1.indexAxis = 'y';
     chartBar = new Chart(ctx1, {
       type: 'bar',
       data: {
@@ -526,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function () {
           borderSkipped: false,
         }]
       },
-      options: chartOptions('Active Jobs by Stage', 'Jobs'),
+      options: opts1,
     });
 
     // Chart 2: Revenue by stage (only if value data present)
