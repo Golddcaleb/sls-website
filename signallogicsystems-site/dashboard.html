@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Flow Monitor — Signal Logic Systems</title>
+  <meta name="description" content="Job Flow Monitor diagnostic dashboard. Upload a CSV export from your ERP to identify production constraints and revenue at risk.">
+  <link rel="icon" href="signallogicsystems-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="main.js" defer></script>
+  <script src="dashboard.js" defer></script>
+
+  <style>
+    /* ── Dashboard-specific styles ─────────────────────────── */
+
+    /* Upload Section */
+    .upload-hero {
+      min-height: calc(100vh - 80px);
+      display: flex;
+      align-items: center;
+      padding-top: 100px;
+    }
+
+    .upload-hero .container {
+      width: 100%;
+      max-width: 680px;
+      text-align: center;
+    }
+
+    .upload-hero h1 {
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+      margin-bottom: .75rem;
+    }
+
+    .upload-hero p {
+      font-size: 1.05rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .drop-zone {
+      background: var(--bg-card);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 3.5rem 2rem;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .6rem;
+      user-select: none;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--gold);
+      background: rgba(244, 197, 66, .04);
+    }
+
+    .drop-zone.loading {
+      pointer-events: none;
+      opacity: .7;
+    }
+
+    .drop-zone strong {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      color: var(--text-primary);
+    }
+
+    .drop-zone span {
+      color: var(--text-secondary);
+      font-size: .9rem;
+    }
+
+    .drop-icon {
+      font-size: 2.5rem;
+      color: var(--gold);
+      line-height: 1;
+      display: block;
+      margin-bottom: .25rem;
+    }
+
+    .upload-meta {
+      margin-top: 1.25rem;
+      font-size: .82rem;
+      color: var(--text-secondary);
+    }
+
+    .upload-meta code {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: .8rem;
+      color: var(--gold);
+    }
+
+    .upload-error {
+      display: none;
+      margin-top: 1rem;
+      color: #f87171;
+      font-size: .9rem;
+      background: rgba(248, 113, 113, .08);
+      border: 1px solid rgba(248, 113, 113, .25);
+      border-radius: 6px;
+      padding: .65rem 1rem;
+    }
+
+    /* Column Mapping */
+    .mapping-section {
+      display: none;
+      padding: 6rem 0 4rem;
+    }
+
+    .mapping-card {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
+      padding: 2.5rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .mapping-card h3 { margin-bottom: .5rem; }
+    .mapping-card > p { margin-bottom: 2rem; }
+
+    .mapping-subhead {
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: .72rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .75rem;
+    }
+
+    .detected-list {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: rgba(244, 197, 66, .04);
+      border: 1px solid rgba(244, 197, 66, .15);
+      border-radius: 8px;
+    }
+
+    .detected-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      font-size: .88rem;
+    }
+
+    .det-field { color: var(--text-secondary); width: 130px; flex-shrink: 0; }
+    .det-arrow { color: var(--gold); }
+    .det-col   { color: var(--text-primary); font-weight: 500; }
+
+    .mapping-fields { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+
+    .map-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .map-label {
+      flex: 0 0 160px;
+      font-size: .9rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+
+    .req-star { color: #f87171; font-weight: 700; }
+    .opt-tag  { font-size: .72rem; color: var(--text-secondary); background: var(--bg-black); border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; }
+
+    .map-select {
+      flex: 1;
+      background: var(--bg-black);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: .5rem .75rem;
+      font-family: var(--font-body);
+      font-size: .9rem;
+      appearance: auto;
+    }
+
+    .map-select:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+    .mapping-error {
+      color: #f87171;
+      font-size: .88rem;
+      margin-bottom: 1rem;
+      min-height: 1.2em;
+    }
+
+    .mapping-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    /* Dashboard */
+    .dash-section {
+      display: none;
+      padding: 100px 0 4rem;
+    }
+
+    .dash-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .dash-header-left h2 { margin-bottom: .25rem; }
+
+    .dash-meta {
+      font-size: .82rem;
+      color: var(--text-secondary);
+    }
+
+    .dash-actions {
+      display: flex;
+      gap: .75rem;
+      flex-shrink: 0;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
+      padding: 1.4rem 1.5rem;
+    }
+
+    .kpi-label {
+      font-size: .72rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: .5rem;
+    }
+
+    .kpi-value {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: .25rem;
+    }
+
+    .kpi-sub {
+      font-size: .8rem;
+      color: var(--text-secondary);
+    }
+
+    .kpi-card.kpi-constraint .kpi-value {
+      font-size: 1.35rem;
+      color: #f87171;
+    }
+
+    /* Charts */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+    }
+
+    .chart-card-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1.25rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+    }
+
+    /* Priority Table */
+    .priority-wrap {
+      display: none;
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      overflow-x: auto;
+    }
+
+    .priority-wrap h3 {
+      font-size: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .priority-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+
+    .priority-table th {
+      text-align: left;
+      padding: .5rem .75rem;
+      font-size: .72rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .priority-table td {
+      padding: .65rem .75rem;
+      border-bottom: 1px solid rgba(43, 47, 54, .5);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .priority-row:last-child td { border-bottom: none; }
+
+    .td-rank   { color: var(--text-secondary); font-size: .8rem; }
+    .td-job    { font-family: var(--font-heading); font-weight: 700; }
+    .td-val    { color: var(--gold); font-weight: 500; }
+
+    .stage-badge {
+      display: inline-block;
+      background: rgba(43, 47, 54, .8);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: .8rem;
+      color: var(--text-secondary);
+    }
+
+    .stage-constraint {
+      background: rgba(239, 68, 68, .12);
+      border-color: rgba(239, 68, 68, .35);
+      color: #f87171;
+    }
+
+    .late-badge {
+      display: inline-block;
+      background: rgba(248, 113, 113, .12);
+      border: 1px solid rgba(248, 113, 113, .3);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: .8rem;
+      color: #f87171;
+    }
+
+    .priority-row.urgent   td { background: rgba(248, 113, 113, .03); }
+    .priority-row.warning  td { background: rgba(251, 191, 36, .03);  }
+
+    /* Diagnostic Summary */
+    .summary-card {
+      background: rgba(244, 197, 66, .05);
+      border: 1px solid rgba(244, 197, 66, .2);
+      border-radius: var(--card-radius);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .summary-label {
+      font-size: .72rem;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .summary-card p {
+      color: var(--text-primary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: .5rem;
+    }
+
+    .summary-card p:last-child { margin-bottom: 0; }
+
+    .summary-card strong { color: var(--text-primary); }
+
+    /* Divider */
+    .dash-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem 0;
+    }
+
+    /* Print styles */
+    @media print {
+      .site-nav, .mobile-menu, .dash-actions, #resetBtn { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .kpi-card, .chart-card, .priority-wrap, .summary-card {
+        border: 1px solid #ccc !important;
+        background: white !important;
+      }
+      .kpi-value, .kpi-label, .kpi-sub, .summary-card p,
+      .priority-table th, .priority-table td, .chart-card-title,
+      .dash-header-left h2, .dash-meta { color: black !important; }
+      .kpi-card.kpi-constraint .kpi-value { color: #c00 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════ -->
+<nav class="site-nav" id="siteNav">
+  <div class="container">
+    <div class="nav-inner">
+
+      <a href="index.html" class="nav-logo">
+        <img src="signallogicsystems-icon.png" alt="Signal Logic Systems icon" class="nav-logo-img">
+        <div class="nav-logo-text">
+          <span class="nav-logo-main">SignalLogic</span>
+          <span class="nav-logo-sub">Systems LLC</span>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="solutions.html">Solutions</a></li>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="get-started.html">Get Started</a></li>
+      </ul>
+
+      <div class="nav-right">
+        <a href="get-started.html" class="btn btn-primary btn-sm">Book a Demo</a>
+      </div>
+
+      <button class="hamburger" aria-label="Toggle navigation menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a href="index.html">Home</a>
+  <a href="solutions.html">Solutions</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="get-started.html">Get Started</a>
+  <a href="get-started.html" class="btn btn-primary mobile-cta">Book a Demo</a>
+</div>
+
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════
+     UPLOAD SECTION
+     ═══════════════════════════════════════════════════════ -->
+<section class="upload-hero grid-texture" id="uploadSection">
+  <div class="container">
+    <span class="section-label">Job Flow Monitor</span>
+    <h1>Upload your ERP export to run diagnostics</h1>
+    <p>Drop a CSV from JobBOSS or any ERP job listing report. The engine identifies your production constraint, calculates revenue at risk, and surfaces the jobs that need immediate attention.</p>
+
+    <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Upload CSV file">
+      <div id="dropMsg">
+        <span class="drop-icon">&#8679;</span>
+        <strong>Drag &amp; drop your CSV here</strong>
+        <span>or click to browse</span>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".csv,.txt" style="display:none;">
+
+    <div id="uploadError" class="upload-error"></div>
+
+    <p class="upload-meta">
+      Accepts <code>.csv</code> exports from JobBOSS, Epicor, JobTracker, and most ERP job listing reports.
+      Raw data is processed locally in your browser — nothing is uploaded or stored.
+    </p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     COLUMN MAPPING SECTION
+     ═══════════════════════════════════════════════════════ -->
+<section class="mapping-section" id="mappingSection">
+  <div class="container">
+    <div class="mapping-card">
+      <h3>Column Mapping Required</h3>
+      <p>Some columns couldn't be auto-detected. Match your CSV columns to the fields below, then click Apply.</p>
+
+      <div class="mapping-subhead">Auto-Detected</div>
+      <div class="detected-list" id="detectedList"></div>
+
+      <div class="mapping-subhead">Map Missing Fields</div>
+      <div class="mapping-fields" id="mappingFields"></div>
+
+      <div class="mapping-error" id="mappingError"></div>
+
+      <div class="mapping-actions">
+        <button class="btn btn-primary" id="applyMappingBtn">Apply Mapping &rarr;</button>
+        <button class="btn btn-outline" id="backToUploadBtn">Back</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     DASHBOARD SECTION
+     ═══════════════════════════════════════════════════════ -->
+<section class="dash-section" id="dashSection">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div class="dash-header-left">
+        <span class="section-label">Diagnostic Report</span>
+        <h2>Job Flow Monitor</h2>
+        <div class="dash-meta">
+          <span id="reportDate"></span> &nbsp;·&nbsp; <span id="reportRecords"></span>
+        </div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-outline btn-sm" id="printBtn">Export PDF</button>
+        <button class="btn btn-outline btn-sm" id="resetBtn">Analyze Another File</button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+
+      <div class="kpi-card">
+        <div class="kpi-label">Active Jobs</div>
+        <div class="kpi-value" id="kpi-total-jobs">—</div>
+        <div class="kpi-sub">in active pipeline</div>
+      </div>
+
+      <div class="kpi-card kpi-constraint">
+        <div class="kpi-label">Constraint Stage</div>
+        <div class="kpi-value" id="kpi-constraint">—</div>
+        <div class="kpi-sub" id="kpi-constraint-sub">identified bottleneck</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Revenue at Risk</div>
+        <div class="kpi-value" id="kpi-revenue-risk">—</div>
+        <div class="kpi-sub">held at constraint</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Upstream Exposure</div>
+        <div class="kpi-value" id="kpi-cascade">—</div>
+        <div class="kpi-sub">cascade if unresolved</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Jobs Past Due</div>
+        <div class="kpi-value" id="kpi-past-due">—</div>
+        <div class="kpi-sub" id="kpi-ontime-sub">on-time rate: <span id="kpi-ontime">—</span></div>
+      </div>
+
+    </div>
+
+    <!-- Diagnostic Summary -->
+    <div class="summary-card">
+      <div class="summary-label">Diagnostic Summary</div>
+      <div id="diagnosticSummary"></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+
+      <div class="chart-card">
+        <div class="chart-card-title">Active Jobs by Stage</div>
+        <div class="chart-wrap">
+          <canvas id="chartConstraint"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card" id="chartRevenueWrap">
+        <div class="chart-card-title">Revenue Held by Stage</div>
+        <div class="chart-wrap">
+          <canvas id="chartRevenue"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Priority Table -->
+    <div class="priority-wrap" id="priorityTableWrap">
+      <h3>Priority Job Ranking — Past Due by Financial Impact</h3>
+      <table class="priority-table">
+        <thead id="priorityThead"></thead>
+        <tbody id="priorityTbody"></tbody>
+      </table>
+    </div>
+
+    <hr class="dash-divider">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+      <p style="font-size:.82rem; color:var(--text-secondary); margin:0;">
+        Report generated by <strong style="color:var(--text-primary);">Signal Logic Systems LLC</strong>.
+        Raw data was not uploaded or retained. Derived metrics only.
+      </p>
+      <button class="btn btn-outline btn-sm" id="resetBtn2">Analyze Another File</button>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+
+      <div class="footer-brand">
+        <a href="index.html" class="footer-logo-link">
+          <img src="signallogicsystems-logo.png" alt="Signal Logic Systems" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline">Turn operational chaos into clear, actionable signals.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="solutions.html">Solutions</a></li>
+          <li><a href="how-it-works.html">How It Works</a></li>
+          <li><a href="get-started.html">Get Started</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <div class="footer-contact-list">
+          <a href="mailto:hello@signallogicsystems.com">hello@signallogicsystems.com</a>
+          <a href="tel:+13303036511">(330) 303-6511</a>
+          <span>Ohio, USA</span>
+          <a href="https://signallogicsystems.com">signallogicsystems.com</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 Signal Logic Systems LLC. All rights reserved.</p>
+      <p>No client data is stored by Signal Logic Systems.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
