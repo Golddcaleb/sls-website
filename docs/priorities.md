@@ -10,7 +10,7 @@
 
 2. **Build processing engine**  
    Backend logic for Job Flow Monitor: accepts CSV input, returns diagnostic output without exposing the calculation engine.  
-   Status: Phase 1 (browser-based demo engine) complete — dashboard.html + dashboard.js built with constraint ID, revenue at risk, cascade analysis, and priority ranking. Architecture documented in docs/jfm-architecture.md. Phase 2 (Netlify Function with HMAC auth) is next step before first paying client.
+   Status: Phase 1 (browser-based demo engine) complete and polished — constraint chart now horizontal, customer name displayed in report header, raw job data scrubbed from memory post-processing. Synthetic demo CSV (Midwest Precision Fabricating, 60 jobs) created for sales demos. Phase 2 (Netlify Function with HMAC auth) is next step before first paying client.
 
 3. **Start outreach**  
    Send follow-up to AMEND Consulting. Begin broader outreach to consulting firms.  
@@ -30,7 +30,7 @@
 
 ## Next Actions
 
-- Set up GitHub repo and push codebase
 - Connect GitHub repo to Netlify and verify live deployment
-- Test dashboard.js with a real JobBOSS CSV export
+- Test dashboard.js with a real JobBOSS CSV export using the demo CSV as a baseline
 - Build Phase 2: Netlify Function endpoint with HMAC-SHA256 auth
+- Follow up with AMEND Consulting
