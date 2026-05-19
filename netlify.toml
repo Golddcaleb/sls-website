@@ -1,2 +1,4 @@
 [build]
   publish = "signallogicsystems-site"
+  functions = "netlify/functions"
+

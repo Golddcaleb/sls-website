@@ -9,8 +9,8 @@
    Status: **Done** — Live on Netlify, SSL active, GitHub auto-deploy configured, Google Workspace email active.
 
 2. **Build processing engine**  
-   Backend logic for Job Flow Monitor: accepts CSV input, returns diagnostic output without exposing the calculation engine.  
-   Status: **In progress — Phase 2 backend core complete.** Phase 1 (browser demo) shipped. Phase 2 backend modules built and tested this session: `lib/auth/hmac.js`, `lib/ingest/parse-csv.js`, `lib/normalize/column-mapper.js` + schemas for jobs and inventory, and the full `lib/analyze/job-flow/` engine (constraint, revenue-at-risk, priority-rank, index composer). 113 tests passing, 0 failures across hmac (23), ingest (29), normalize (39), analyze-job-flow (22). JFM metrics output is byte-compatible with Phase 1 `calculate()`. **Remaining for Phase 2:** `lib/render/report-builder.js` + `render/sections/` (port Phase 1 dashboard render functions to self-contained HTML report), then `netlify/functions/process.js` to wire hmac → ingest → normalize → analyze → render end to end.
+   Backend logic that accepts CSV input, returns diagnostic output without exposing the calculation engine.  
+   Status: **Phase 2 backend complete end-to-end for Blue Ash ship-vs-invoice.** Pipeline wired this session: `lib/analyze/inventory/ship-vs-invoice.js` (reconciliation engine — match / mismatch / wrong_po / unmatched buckets, P21 `-N` suffix handling, multi-slice aggregation), full `lib/render/` tree (shell with inlined SLS brand CSS + screen-dark/print-light palette, shared KPI/table/diagnostic section primitives, Blue Ash composer), `lib/ingest/parse-multipart.js` (zero-dep RFC 7578 binary-safe parser), `netlify/functions/process.js` (single entry point, HMAC-first auth gate, generic 401 on failure for recon hardening, returns HTML as `Content-Disposition: attachment` download), and `lib/auth/hmac.js` binary-body fix (two-arg `hmac.update()` to avoid lossy UTF-8 decode of Buffer bodies — all 23 existing hmac tests still pass). `netlify.toml` updated with `functions = "netlify/functions"`. End-to-end smoke tests pass: valid signed POST → 200 + 15.7 KB self-contained HTML; all auth-reject paths verified. **Remaining JFM Phase 2 work:** port Phase 1 dashboard.js render functions into `lib/render/job-flow/` composer, add `case 'job-flow'` branch in `process.js`, write unit tests for parse-multipart + analyze/inventory + renders, set `SLS_SECRET_BLUEASH` in Netlify env vars before first real submission.
 
 3. **Start outreach**  
    Begin outreach to manufacturing consulting firms and direct prospects.  
@@ -18,7 +18,7 @@
 
 4. **Land first customer**  
    Target: within 30 days of April 2026.  
-   Status: No current paying customers. Phase 2 render layer + Netlify Function endpoint is the remaining blocker.
+   Status: No current paying customers. Blue Ash ship-vs-invoice path is now production-ready pending env var — JFM render port remains the blocker for the flagship product.
 
 5. **Record VSL**  
    Homepage video placeholder needs real content.  
@@ -30,9 +30,10 @@
 
 ## Next Actions
 
-- Build `lib/render/report-builder.js` and `lib/render/sections/` — port Phase 1 dashboard.js render functions to produce a self-contained HTML report from the analyze-job-flow metrics object
-- Build `netlify/functions/process.js` — wire hmac → ingest → normalize → analyze → render end to end
-- Test the full pipeline against the Midwest Precision Fabricating demo CSV and verify byte-compatibility with Phase 1 output
+- Port Phase 1 `dashboard.js` render functions into `lib/render/job-flow/` composer using the shared report-builder shell
+- Add `case 'job-flow'` branch in `netlify/functions/process.js`
+- Write unit tests for `lib/ingest/parse-multipart.js`, `lib/analyze/inventory/ship-vs-invoice.js`, and the render composers
+- Set `SLS_SECRET_BLUEASH` in Netlify env vars before first real submission
 - Begin outreach to manufacturing consulting firms (separate from AMEND)
 - Record VSL for homepage
 
