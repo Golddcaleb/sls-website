@@ -46,8 +46,11 @@ const { parseMultipart }       = require('../../lib/ingest/parse-multipart');
 const { parseFile }            = require('../../lib/ingest/parse-csv');
 const { normalize }            = require('../../lib/normalize/column-mapper');
 const inventorySchema          = require('../../lib/normalize/schemas/inventory');
+const jobsSchema               = require('../../lib/normalize/schemas/jobs');
 const { shipVsInvoice }        = require('../../lib/analyze/inventory/ship-vs-invoice');
 const { renderShipVsInvoice }  = require('../../lib/render/inventory/ship-vs-invoice');
+const { analyzeJobFlow }       = require('../../lib/analyze/job-flow');
+const { renderJobFlow }        = require('../../lib/render/job-flow/job-flow');
 
 // ---------------------------------------------------------------------------
 // Customer registry
@@ -188,6 +191,64 @@ function runShipVsInvoice(parts, ctx) {
   return { statusCode: 200, html, filename, status };
 }
 
+/**
+ * Run the Job Flow Monitor pipeline end to end.
+ *
+ * Accepts a single file part. The field name is `jobs` by convention,
+ * but a sole file part under any name is accepted so the upload form
+ * doesn't need to be exact for a one-file submission.
+ *
+ * @param {Array<{name:string, filename:string|null, contentType:string|null, data:Buffer}>} parts
+ * @param {object} ctx
+ * @param {string} ctx.customerId
+ * @param {Date}   ctx.today
+ * @returns {{ statusCode:number, body?:string, filename?:string, html?:string, status?:string }}
+ */
+function runJobFlow(parts, ctx) {
+  const jobsPart = parts.find(p => p.name === 'jobs')
+    || (parts.length === 1 ? parts[0] : null);
+
+  if (!jobsPart) {
+    return { statusCode: 400, body: 'Bad Request: a "jobs" file field is required.' };
+  }
+
+  // ── Ingest ───────────────────────────────────────────────────────
+  const parsed = parseFile(jobsPart.data, { filename: jobsPart.filename });
+  if (!parsed.ok) {
+    return { statusCode: 400, body: `Bad Request: could not parse jobs file: ${parsed.error}` };
+  }
+
+  // ── Normalize ────────────────────────────────────────────────────
+  const norm = normalize(parsed, jobsSchema);
+  if (!norm.ok) {
+    return { statusCode: 422, body: `Unprocessable jobs file: ${norm.error}` };
+  }
+
+  // ── Analyze ──────────────────────────────────────────────────────
+  const result = analyzeJobFlow(norm.rows, {
+    today: ctx.today,
+    totalRecords: parsed.rows ? parsed.rows.length : norm.rows.length,
+  });
+
+  // ── Render ───────────────────────────────────────────────────────
+  const customer = lookupCustomerDisplayName(ctx.customerId);
+  const html = renderJobFlow(result, {
+    customer,
+    reportDate: ctx.today,
+  });
+
+  const dateSlug     = ctx.today.toISOString().slice(0, 10);
+  const customerSlug = slugify(customer || ctx.customerId);
+  const filename = `job-flow-${customerSlug}-${dateSlug}.html`;
+
+  const m = result.metrics || {};
+  const status = result.ok
+    ? `jobs=${m.totalJobs || 0} constraint="${m.constraint || ''}" past_due=${m.pastDueCount || 0} on_time=${m.onTimeRate || 0}%`
+    : 'analyze-failed';
+
+  return { statusCode: 200, html, filename, status };
+}
+
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
@@ -253,6 +314,9 @@ exports.handler = async (event) => {
     switch (tool) {
       case 'ship-vs-invoice':
         outcome = runShipVsInvoice(multipart.parts, { customerId, today });
+        break;
+      case 'job-flow':
+        outcome = runJobFlow(multipart.parts, { customerId, today });
         break;
       default:
         return textResponse(400, `Bad Request: unknown tool "${tool}".`);
