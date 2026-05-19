@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(python _gen_demo.py)",
+      "Bash(node *)"
     ]
   }
 }

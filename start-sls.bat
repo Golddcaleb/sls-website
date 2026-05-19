@@ -1,3 +1,6 @@
 @echo off
+echo Syncing Obsidian docs...
+xcopy "G:\My Drive\vault\*.md" "C:\Users\Caleb\sls-project\docs\" /Y /S /Q
+echo Done. Launching Claude Code...
 cd /d C:\Users\Caleb\sls-project
 claude

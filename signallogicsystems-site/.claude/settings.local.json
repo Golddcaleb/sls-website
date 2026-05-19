@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir C:\\\\Users\\\\Caleb\\\\signallogicsystems-site:*)",
+      "Bash(grep -n \"signallogicsystems-icon.png\" /c/Users/Caleb/signallogicsystems-site/*.html)",
+      "Bash(grep -c \"ASSET:\" /c/Users/Caleb/signallogicsystems-site/*.html)",
+      "Bash(grep -oh 'href=\"[^\"]*\\\\.html[^\"]*\"' /c/Users/Caleb/signallogicsystems-site/*.html)",
+      "Bash(grep -rn \"nav-logo-text\\\\|nav-logo-main\\\\|nav-logo-sub\\\\|icon\\\\.png\" /c/Users/Caleb/signallogicsystems-site/*.html /c/Users/Caleb/signallogicsystems-site/*.css)",
+      "Bash(grep -A4 \"class=\\\\\"nav-logo\\\\\"\" /c/Users/Caleb/signallogicsystems-site/*.html)",
+      "Bash(grep -A2 \"footer-logo\" /c/Users/Caleb/signallogicsystems-site/*.html)"
+    ]
+  }
+}
