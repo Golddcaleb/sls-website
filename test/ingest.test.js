@@ -164,6 +164,44 @@ test('parseCSV: headers-only CSV returns zero rows', () => {
   assertEqual(r.rows.length, 0, 'row count');
 });
 
+test('parseCSV: skips banner prelude row before header', () => {
+  // Common ERP shape: title row, blank row, then actual header.
+  const csv =
+    'Monthly Receiving Report,,,,\n' +
+    ',,,,\n' +
+    'PO_Number,Item,Quantity,Unit_Price,Receipt_Date\n' +
+    'PO-1001,BOLT-M10x50,100,0.45,2026-05-01\n' +
+    'PO-1002,WASHER-M10,200,0.12,2026-05-03\n';
+  const r = parseCSV(csv);
+  assert(r.ok, r.error);
+  assertDeepEqual(r.columns, ['PO_Number','Item','Quantity','Unit_Price','Receipt_Date'], 'detected header');
+  assertEqual(r.rows.length, 2, 'data row count');
+  assertEqual(r.rows[0].Item, 'BOLT-M10x50', 'first data row item');
+  assert(r.warnings.some(w => /prelude/i.test(w)), 'reports prelude skip in warnings');
+});
+
+test('parseCSV: opts.headerRow forces a specific header index', () => {
+  const csv =
+    'banner,,,,\n' +
+    'PO,Item,Qty,Price,Date\n' +
+    'PO-1,X,1,2,3\n';
+  // Force headerRow=0: now the "banner" row becomes the header. The data
+  // row that should be the real header lands as data.
+  const r = parseCSV(csv, { headerRow: 0 });
+  assert(r.ok, r.error);
+  assertEqual(r.columns[0], 'banner', 'first column is banner cell');
+});
+
+test('parseCSV: opts.autoDetectHeader=false reverts to first-row-as-header', () => {
+  const csv =
+    'banner,,,,\n' +
+    'PO,Item,Qty,Price,Date\n' +
+    'PO-1,X,1,2,3\n';
+  const r = parseCSV(csv, { autoDetectHeader: false });
+  assert(r.ok, r.error);
+  assertEqual(r.columns[0], 'banner', 'first row used as header');
+});
+
 // ---------------------------------------------------------------------------
 // XLSX tests
 // ---------------------------------------------------------------------------
@@ -251,6 +289,24 @@ test('parseXLSX: empty sheet returns ok=true with zero rows and a warning', () =
   assert(r.ok, r.error);
   assertEqual(r.rows.length, 0, 'row count');
   assert(r.warnings.length > 0, 'should have warning');
+});
+
+test('parseXLSX: skips banner prelude row before header (DRT Blue Ash shape)', () => {
+  // Mirrors the real Matrix export: row 1 is a single-cell report title,
+  // SheetJS would normally key the rest as __EMPTY, __EMPTY_1, …
+  const buf = makeXLSX([
+    ['DRT Mfg - Blue Ash - Monthly Receiving Report - PO Detail'],
+    [],
+    ['PO_Number', 'Item', 'Quantity', 'Unit_Price', 'Receipt_Date'],
+    ['PO-1001', 'BOLT-M10x50', 100, 0.45, '2026-05-01'],
+    ['PO-1002', 'WASHER-M10',  200, 0.12, '2026-05-03'],
+  ]);
+  const r = parseXLSX(buf);
+  assert(r.ok, r.error);
+  assertDeepEqual(r.columns, ['PO_Number','Item','Quantity','Unit_Price','Receipt_Date'], 'detected header');
+  assertEqual(r.rows.length, 2, 'data row count');
+  assertEqual(r.rows[0].Item, 'BOLT-M10x50', 'first data row item');
+  assert(r.warnings.some(w => /prelude/i.test(w)), 'reports prelude skip in warnings');
 });
 
 // ---------------------------------------------------------------------------
