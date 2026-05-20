@@ -4,3 +4,10 @@ node_modules/
 
 # Sample/demo data — keep out of public repo
 sample-data/
+
+# Local environment / secrets
+.env
+.env.local
+
+# Test submission output
+scripts/output/

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git:*)",
       "Bash(python _gen_demo.py)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(npm install *)"
     ]
   }
 }

@@ -1,82 +1,84 @@
 # JFM Backend Architecture
+*Modular SLS Processing Engine*
+*Last updated: May 2026*
 
-## Overview
-Two-phase build. Phase 1 = browser-only demo (no IP leakage risk because demo data only). Phase 2 = Netlify Function backend that holds the calculator.
+## Design Principle
+Every SLS tool does the same four things:
+1. **Ingest** — accept CSV(s)
+2. **Normalize** — map ERP columns to clean internal schema
+3. **Analyze** — run tool-specific logic
+4. **Render** — produce self-contained HTML report
 
-## Phase 1: Browser Demo
-- Static HTML/CSS/JS
-- `calculate()` runs in browser against demo CSVs
-- Used for sales demos only — never against real customer data
-- Lives in `signallogicsystems-site/job-flow-monitor/`
+Only steps 3 and 4 change between tools. Everything else is shared.
 
-## Phase 2: Netlify Function Backend
-- Customer POSTs signed multipart CSV → `/process`
-- HMAC-SHA256 auth per customer (secret in Netlify env var)
-- Function pipeline: hmac → ingest → normalize → analyze → render
-- Returns self-contained HTML report as attachment download
-- No raw data persisted; metrics retained 60 days max per SOW
-
-## File Tree
+## Folder Structure (on PC: `sls-project/`)
 ```
+netlify/functions/
+  process.js              ← single entry point, routes by tool
+
 lib/
-  auth/hmac.js
-  ingest/parse-csv.js
-  ingest/parse-multipart.js
-  normalize/column-mapper.js
-  schemas/jobs.js
-  schemas/inventory.js
-  analyze/job-flow/
-    constraint.js
-    revenue-at-risk.js
-    priority-rank.js
-    index.js
-  analyze/inventory/
-    ship-vs-invoice.js
+  auth/
+    hmac.js               ← HMAC-SHA256 verify (shared)
+  ingest/
+    parse-csv.js          ← PapaParse wrapper (shared)
+  normalize/
+    column-mapper.js      ← fuzzy header matching (shared)
+    schemas/
+      jobs.js             ← job/WO schema (JFM)
+      inventory.js        ← inventory schema (Blue Ash)
+      purchase-orders.js  ← PO schema (future)
+  analyze/
+    job-flow/             ← JFM engine
+      constraint.js
+      revenue-at-risk.js
+      priority-rank.js
+    inventory/            ← Blue Ash engine
+      ship-vs-invoice.js
+      aging.js
+    po-tracking/          ← future
+      lead-time.js
+      follow-up-triggers.js
   render/
-    utils.js
-    report-builder.js
+    report-builder.js     ← HTML shell (shared)
     sections/
       kpi-cards.js
       tables.js
+      charts.js
       diagnostic-text.js
-    inventory/
-      ship-vs-invoice.js
-netlify/
-  functions/
-    process.js
 ```
 
 ## Build Order
-1. `lib/auth/hmac.js`
-2. `lib/ingest/parse-csv.js`
-3. `lib/normalize/column-mapper.js` + `schemas/jobs.js`
-4. `lib/analyze/job-flow/` modules
+1. `lib/auth/hmac.js` — shared, no dependencies
+2. `lib/ingest/parse-csv.js` — shared, no dependencies
+3. `lib/normalize/column-mapper.js` + `schemas/jobs.js` — JFM schema first
+4. `lib/analyze/job-flow/` — JFM engine modules
 5. `lib/render/report-builder.js` + sections
 6. `netlify/functions/process.js` — wire it all together
 7. Repeat steps 3-4 for `inventory/` schema + analyze modules (Blue Ash)
 
 ## Phase Status
-- [x] Phase 1 (browser demo): Complete
-- [x] Phase 2 (Netlify Function): Blue Ash ship-vs-invoice path complete end-to-end
-  - [x] lib/auth/hmac.js (binary-safe HMAC update fix applied)
-  - [x] lib/ingest/parse-csv.js
-  - [x] lib/ingest/parse-multipart.js
-  - [x] lib/normalize/column-mapper.js
-  - [x] schemas/jobs.js
-  - [x] schemas/inventory.js (built ahead of step 7 — Blue Ash)
-  - [x] analyze/job-flow/ (constraint, revenue-at-risk, priority-rank, index)
-  - [x] analyze/inventory/ship-vs-invoice.js (Blue Ash reconciliation engine)
-  - [x] render/utils.js + report-builder.js + sections/ (shared shell + KPI/table/diagnostic primitives)
-  - [x] render/inventory/ship-vs-invoice.js (Blue Ash composer)
-  - [x] netlify/functions/process.js (HMAC-first; returns HTML attachment)
-  - [ ] render/job-flow/ composer (port Phase 1 dashboard.js render functions)
-  - [ ] `case 'job-flow'` branch in process.js
-  - [ ] Unit tests for parse-multipart, analyze/inventory/ship-vs-invoice, renders
-  - [ ] SLS_SECRET_BLUEASH env var set in Netlify before first real submission
+- [ ] Phase 1 (browser demo): ✅ Complete
+- [ ] Phase 2 (Netlify Function): 🔄 In progress
+  - [ ] lib/auth/hmac.js
+  - [ ] lib/ingest/parse-csv.js
+  - [ ] lib/normalize/column-mapper.js
+  - [ ] schemas/jobs.js
+  - [ ] analyze/job-flow/
+  - [ ] render/report-builder.js
+  - [ ] netlify/functions/process.js
 
 ## Security Model
 - HMAC-SHA256 per customer — secret issued at onboarding
 - All processing in memory — nothing written to disk
 - Raw CSV discarded after request lifecycle ends
 - Output HTML contains only derived metrics, no raw data
-- Auth failure reasons logged server-side only — generic 401 to caller (recon hardening)
+
+## Multi-File Ingest (Blue Ash)
+Blue Ash sends 2 CSVs (Matrix receipts + Proper 21 invoices).
+The ingest layer needs to handle multi-file submissions.
+This is a one-time addition that all future multi-source tools inherit.
+
+## Related
+→ [[Job Flow Monitor]]
+→ [[Blue Ash Industrial Supply]]
+→ [[PO Tracker]]
