@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Files — Signal Logic Systems</title>
+  <meta name="description" content="Authenticated submission portal for SLS diagnostic tools.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="signallogicsystems-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script src="main.js" defer></script>
+  <style>
+    /* ─── Submit page specific ───────────────────────────── */
+    :root {
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .submit-wrap { max-width: 860px; margin: 0 auto; }
+
+    .submit-section-title {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: .82rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 .85rem;
+    }
+
+    /* ─── Tool selector ──────────────────────────────────── */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 0 0 1.75rem;
+    }
+    @media (max-width: 720px) { .tool-grid { grid-template-columns: 1fr; } }
+
+    .tool-card {
+      position: relative;
+      display: block;
+      padding: 1.25rem 1.25rem 1.1rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--card-radius);
+      background: rgba(255,255,255,.02);
+      cursor: pointer;
+      transition: border-color .2s ease, background .2s ease, transform .15s ease;
+    }
+    .tool-card:hover { border-color: rgba(244,197,66,.45); background: rgba(244,197,66,.03); }
+    .tool-card.selected {
+      border-color: var(--gold);
+      background: rgba(244,197,66,.06);
+    }
+    .tool-card input[type="radio"] {
+      position: absolute; opacity: 0; pointer-events: none;
+    }
+    .tool-card-radio {
+      width: 14px; height: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: .55rem;
+      position: relative;
+      transition: border-color .15s ease;
+    }
+    .tool-card.selected .tool-card-radio { border-color: var(--gold); }
+    .tool-card.selected .tool-card-radio::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+    .tool-card-name {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: .5px;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+    .tool-card-desc {
+      margin-top: .55rem;
+      font-size: .82rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+    .tool-card-key {
+      display: inline-block;
+      margin-top: .65rem;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .3px;
+      color: var(--gold);
+      background: rgba(244,197,66,.08);
+      border: 1px solid rgba(244,197,66,.2);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* ─── API key field ──────────────────────────────────── */
+    .key-row {
+      display: flex;
+      align-items: stretch;
+      gap: .5rem;
+      margin: 0 0 .5rem;
+    }
+    .key-input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: .88rem;
+      letter-spacing: .5px;
+      color: var(--text-primary);
+      background: rgba(255,255,255,.02);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .7rem .85rem;
+      outline: none;
+      transition: border-color .15s ease;
+      min-width: 0;
+    }
+    .key-input:focus { border-color: rgba(244,197,66,.5); }
+    .key-input.valid    { border-color: rgba(34,197,94,.45); }
+    .key-input.invalid  { border-color: rgba(239,68,68,.45); }
+    .key-input::placeholder { color: rgba(181,181,190,.45); font-family: var(--font-mono); }
+
+    .key-toggle {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0 1rem;
+      cursor: pointer;
+      transition: color .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .key-toggle:hover {
+      color: var(--gold);
+      border-color: rgba(244,197,66,.4);
+      background: rgba(244,197,66,.04);
+    }
+
+    .key-status {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .5px;
+      color: var(--text-secondary);
+      min-height: 1.1em;
+      margin-bottom: 1.75rem;
+    }
+    .key-status.valid   { color: #4ade80; }
+    .key-status.invalid { color: #fca5a5; }
+
+    .forget-link {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      letter-spacing: .5px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: -1rem 0 1.75rem;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: rgba(181,181,190,.3);
+      text-underline-offset: 3px;
+      transition: color .15s ease, text-decoration-color .15s ease;
+    }
+    .forget-link:hover {
+      color: var(--gold);
+      text-decoration-color: rgba(244,197,66,.5);
+    }
+    .forget-link[hidden] { display: none; }
+
+    /* ─── Drop zones ─────────────────────────────────────── */
+    .drop-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 0 0 1.75rem;
+    }
+    .drop-grid.single { grid-template-columns: 1fr; }
+    @media (max-width: 720px) { .drop-grid { grid-template-columns: 1fr; } }
+
+    .drop-zone {
+      position: relative;
+      border: 1.5px dashed var(--border);
+      border-radius: var(--card-radius);
+      background: rgba(255,255,255,.02);
+      padding: 1.75rem 1.25rem;
+      text-align: center;
+      transition: border-color .2s ease, background .2s ease;
+      cursor: pointer;
+    }
+    .drop-zone:hover     { border-color: rgba(244,197,66,.55); background: rgba(244,197,66,.03); }
+    .drop-zone.dragover  { border-color: var(--gold); background: rgba(244,197,66,.06); }
+    .drop-zone.has-file  { border-color: rgba(244,197,66,.55); border-style: solid; background: rgba(244,197,66,.04); }
+
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .drop-zone-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: .72rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .35rem;
+    }
+    .drop-zone-hint { font-size: .85rem; color: var(--text-secondary); }
+    .drop-zone-file {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: .85rem;
+      color: var(--text-primary);
+      word-break: break-all;
+      text-align: left;
+      padding: 0 .25rem;
+    }
+    .drop-zone-file .file-head {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .drop-zone-file .file-name { flex: 1; min-width: 0; word-break: break-all; }
+    .drop-zone-file .file-meta {
+      display: block;
+      color: var(--text-secondary);
+      font-size: .72rem;
+      letter-spacing: .3px;
+      margin-top: .3rem;
+    }
+    .file-type-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(244,197,66,.1);
+      border: 1px solid rgba(244,197,66,.3);
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    .file-remove {
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+      transition: color .15s ease, border-color .15s ease;
+      position: relative;
+      z-index: 2;
+    }
+    .file-remove:hover {
+      color: #fca5a5;
+      border-color: rgba(239,68,68,.4);
+    }
+    .drop-zone.has-file .drop-zone-hint { display: none; }
+    .drop-zone.has-file .drop-zone-file { display: block; }
+
+    /* ─── Submit + spinner ───────────────────────────────── */
+    .submit-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+
+    .form-submit-btn[disabled] {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .form-submit-btn[disabled]:hover {
+      background: var(--gold);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(244,197,66,.25);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: sls-spin .8s linear infinite;
+    }
+    .spinner.show { display: inline-block; }
+    @keyframes sls-spin { to { transform: rotate(360deg); } }
+
+    .engine-state {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .engine-state.show { display: inline-flex; align-items: center; gap: .55rem; }
+
+    /* ─── Status panel ───────────────────────────────────── */
+    .status-panel {
+      margin-top: 1.5rem;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,.02);
+      font-family: var(--font-mono);
+      font-size: .85rem;
+      line-height: 1.55;
+      display: none;
+      word-break: break-word;
+    }
+    .status-panel.show    { display: block; }
+    .status-panel.info    { border-color: rgba(244,197,66,.4); color: var(--text-primary); }
+    .status-panel.success { border-color: rgba(34,197,94,.4); color: #4ade80; }
+    .status-panel.error   { border-color: rgba(239,68,68,.4); color: #fca5a5; }
+    .status-panel code {
+      font-family: var(--font-mono);
+      color: var(--gold);
+    }
+
+    /* ─── Security callout ───────────────────────────────── */
+    .security-note {
+      margin-top: 1.5rem;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: 6px;
+      background: rgba(244,197,66,.03);
+      display: flex;
+      gap: .85rem;
+      align-items: flex-start;
+    }
+    .security-note svg {
+      flex-shrink: 0;
+      color: var(--gold);
+      margin-top: 2px;
+    }
+    .security-note p {
+      margin: 0;
+      font-size: .82rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .security-note strong {
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: .78rem;
+      letter-spacing: .5px;
+    }
+
+    /* ─── Meta footer ────────────────────────────────────── */
+    .submit-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .5px;
+      color: var(--text-secondary);
+      margin-top: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .submit-meta span code { color: var(--gold); font-family: var(--font-mono); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════ -->
+<nav class="site-nav" id="siteNav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="signallogicsystems-icon.png" alt="Signal Logic Systems icon" class="nav-logo-img">
+        <div class="nav-logo-text">
+          <span class="nav-logo-main">SignalLogic</span>
+          <span class="nav-logo-sub">Systems LLC</span>
+        </div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="solutions.html">Solutions</a></li>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="get-started.html">Get Started</a></li>
+      </ul>
+      <div class="nav-right">
+        <a href="get-started.html" class="btn btn-primary btn-sm">Book a Demo</a>
+      </div>
+      <button class="hamburger" aria-label="Toggle navigation menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a href="index.html">Home</a>
+  <a href="solutions.html">Solutions</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="get-started.html">Get Started</a>
+  <a href="get-started.html" class="btn btn-primary mobile-cta">Book a Demo</a>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE HERO
+     ═══════════════════════════════════════════════════════ -->
+<main>
+<section class="page-hero grid-texture">
+  <div class="container">
+    <span class="section-label">Customer Portal</span>
+    <h1>Submit Files for Processing</h1>
+    <p>Choose a tool, paste your SLS key, and drop your files. Reports are generated in memory and returned to you immediately.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SUBMIT FORM
+     ═══════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="submit-wrap">
+      <div class="path-card">
+
+        <form id="submitForm" novalidate>
+
+          <!-- ─── Tool selector ─── -->
+          <span class="submit-section-title">Select Tool</span>
+          <div class="tool-grid" id="toolGrid">
+
+            <label class="tool-card" data-tool="job-flow">
+              <input type="radio" name="tool" value="job-flow">
+              <span class="tool-card-radio"></span>
+              <span class="tool-card-name">Job Flow Monitor</span>
+              <span class="tool-card-desc">Constraint diagnostic and revenue-at-risk analysis from a single jobs export.</span>
+              <span class="tool-card-key">1 file · jobs</span>
+            </label>
+
+            <label class="tool-card" data-tool="ship-vs-invoice">
+              <input type="radio" name="tool" value="ship-vs-invoice">
+              <span class="tool-card-radio"></span>
+              <span class="tool-card-name">Ship vs Invoice</span>
+              <span class="tool-card-desc">Receipts vs invoices reconciliation. Pairs Matrix receipts against Proper 21 invoices.</span>
+              <span class="tool-card-key">2 files · matrix + proper21</span>
+            </label>
+
+          </div>
+
+          <!-- ─── Customer ID ─── -->
+          <span class="submit-section-title">Customer ID</span>
+          <div class="key-row">
+            <input
+              type="text"
+              id="customerIdInput"
+              class="key-input"
+              placeholder="e.g. BLUEASH"
+              autocomplete="off"
+              spellcheck="false"
+              required
+            >
+          </div>
+          <div class="key-status" id="customerIdStatus" aria-live="polite">Provided by Signal Logic Systems at onboarding.</div>
+
+          <!-- ─── API key ─── -->
+          <span class="submit-section-title">Customer Key</span>
+          <div class="key-row">
+            <input
+              type="password"
+              id="apiKeyInput"
+              class="key-input"
+              placeholder="Paste your SLS secret key (at least 32 characters)"
+              autocomplete="off"
+              spellcheck="false"
+              required
+            >
+            <button type="button" class="key-toggle" id="keyToggleBtn" aria-label="Toggle key visibility">Show</button>
+          </div>
+          <div class="key-status" id="keyStatus" aria-live="polite">Awaiting key…</div>
+          <button type="button" class="forget-link" id="forgetBtn" hidden>Forget my credentials</button>
+
+          <!-- ─── File drop zones (morph per tool) ─── -->
+          <span class="submit-section-title">Files</span>
+          <div class="drop-grid" id="dropGrid">
+            <p style="grid-column: 1 / -1; color: var(--text-secondary); font-size: .88rem; margin: 0; padding: 1rem 0;" id="dropPlaceholder">
+              Select a tool above to choose your files.
+            </p>
+          </div>
+
+          <!-- ─── Submit row ─── -->
+          <div class="submit-row">
+            <button type="submit" class="btn btn-primary form-submit-btn" id="submitBtn" disabled>
+              Submit &amp; Generate Report &rarr;
+            </button>
+            <span class="engine-state" id="engineState">
+              <span class="spinner show"></span>
+              Engine running…
+            </span>
+          </div>
+
+          <div class="status-panel" id="statusPanel" role="status" aria-live="polite"></div>
+
+          <!-- ─── Security callout ─── -->
+          <div class="security-note">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <p>
+              <strong>NO DATA RETENTION</strong><br>
+              Your files are processed in memory and immediately discarded. No raw data is stored by Signal Logic Systems.
+            </p>
+          </div>
+
+          <div class="submit-meta">
+            <span>Endpoint: <code>/.netlify/functions/process</code></span>
+            <span>Auth: <code>HMAC-SHA256</code></span>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="footer-logo-link">
+          <img src="signallogicsystems-logo.png" alt="Signal Logic Systems" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline">Turn operational chaos into clear, actionable signals.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <div class="footer-contact-list">
+          <a href="mailto:hello@signallogicsystems.com">hello@signallogicsystems.com</a>
+          <a href="tel:+13303036511">(330) 303-6511</a>
+          <span>Ohio, USA</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Signal Logic Systems LLC. All rights reserved.</p>
+      <p>No client data is stored by Signal Logic Systems.</p>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SUBMISSION SCRIPT
+     ═══════════════════════════════════════════════════════ -->
+<script>
+(() => {
+  'use strict';
+
+  const ENDPOINT     = '/.netlify/functions/process';
+  const LS_CUSTOMER  = 'sls_customer_id';
+  const LS_API_KEY   = 'sls_api_key';
+
+  const TOOLS = {
+    'job-flow': {
+      header: 'job-flow',
+      zones: [
+        { field: 'jobs', label: 'Jobs Export', hint: 'Drop .csv, .xls, or .xlsx file here, or click to browse', accept: '.csv,.xls,.xlsx' },
+      ],
+    },
+    'ship-vs-invoice': {
+      header: 'ship-vs-invoice',
+      zones: [
+        { field: 'matrix',   label: 'Matrix Receipts', hint: 'Drop .xlsx, .xls, or .csv file here, or click to browse', accept: '.xlsx,.xls,.csv' },
+        { field: 'proper21', label: 'Proper 21 Invoices', hint: 'Drop .csv, .xls, or .xlsx file here, or click to browse', accept: '.csv,.xls,.xlsx' },
+      ],
+    },
+  };
+
+  /* ────────────────────────────────────────────────────────
+   *  State
+   * ──────────────────────────────────────────────────────── */
+  const state = {
+    tool: null,
+    customerId: '',
+    keyValid: false,
+    files: {}, // field name → File
+  };
+
+  /* ────────────────────────────────────────────────────────
+   *  Element refs
+   * ──────────────────────────────────────────────────────── */
+  const toolGrid       = document.getElementById('toolGrid');
+  const customerIdInput = document.getElementById('customerIdInput');
+  const keyInput       = document.getElementById('apiKeyInput');
+  const keyToggleBtn   = document.getElementById('keyToggleBtn');
+  const keyStatus      = document.getElementById('keyStatus');
+  const forgetBtn      = document.getElementById('forgetBtn');
+  const dropGrid       = document.getElementById('dropGrid');
+  const submitBtn      = document.getElementById('submitBtn');
+  const engineState    = document.getElementById('engineState');
+  const statusPanel    = document.getElementById('statusPanel');
+  const form           = document.getElementById('submitForm');
+
+  /* ────────────────────────────────────────────────────────
+   *  Tool selector
+   * ──────────────────────────────────────────────────────── */
+  toolGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.tool-card');
+    if (!card) return;
+    const tool = card.dataset.tool;
+    selectTool(tool);
+  });
+
+  function selectTool(tool) {
+    if (!TOOLS[tool]) return;
+    state.tool = tool;
+    state.files = {};
+
+    for (const c of toolGrid.querySelectorAll('.tool-card')) {
+      const isSelected = c.dataset.tool === tool;
+      c.classList.toggle('selected', isSelected);
+      const radio = c.querySelector('input[type="radio"]');
+      if (radio) radio.checked = isSelected;
+    }
+
+    renderDropZones(TOOLS[tool].zones);
+    updateSubmitState();
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  Customer ID
+   * ──────────────────────────────────────────────────────── */
+  customerIdInput.addEventListener('input', () => {
+    state.customerId = customerIdInput.value.trim();
+    customerIdInput.classList.toggle('valid', state.customerId.length > 0);
+    if (state.customerId.length > 0) {
+      try { localStorage.setItem(LS_CUSTOMER, state.customerId); } catch (_) {}
+    }
+    refreshForgetVisibility();
+    updateSubmitState();
+  });
+
+  /* ────────────────────────────────────────────────────────
+   *  API key
+   * ──────────────────────────────────────────────────────── */
+  keyInput.addEventListener('input', validateKey);
+
+  keyToggleBtn.addEventListener('click', () => {
+    const showing = keyInput.type === 'text';
+    keyInput.type = showing ? 'password' : 'text';
+    keyToggleBtn.textContent = showing ? 'Show' : 'Hide';
+  });
+
+  function validateKey() {
+    const v = keyInput.value.trim();
+    if (v.length === 0) {
+      state.keyValid = false;
+      keyInput.classList.remove('valid', 'invalid');
+      keyStatus.className = 'key-status';
+      keyStatus.textContent = 'Awaiting key…';
+    } else if (v.length >= 32) {
+      state.keyValid = true;
+      keyInput.classList.add('valid');
+      keyInput.classList.remove('invalid');
+      keyStatus.className = 'key-status valid';
+      keyStatus.textContent = `Key looks valid (${v.length} characters).`;
+      try { localStorage.setItem(LS_API_KEY, v); } catch (_) {}
+    } else {
+      state.keyValid = false;
+      keyInput.classList.add('invalid');
+      keyInput.classList.remove('valid');
+      keyStatus.className = 'key-status invalid';
+      keyStatus.textContent = `At least 32 characters required (${v.length} so far).`;
+    }
+    refreshForgetVisibility();
+    updateSubmitState();
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  Persistence — prefill from localStorage on load, and
+   *  a "Forget" control that clears both stored values.
+   * ──────────────────────────────────────────────────────── */
+  function refreshForgetVisibility() {
+    let stored = false;
+    try {
+      stored = !!(localStorage.getItem(LS_CUSTOMER) || localStorage.getItem(LS_API_KEY));
+    } catch (_) {}
+    forgetBtn.hidden = !stored;
+  }
+
+  forgetBtn.addEventListener('click', () => {
+    try {
+      localStorage.removeItem(LS_CUSTOMER);
+      localStorage.removeItem(LS_API_KEY);
+    } catch (_) {}
+    customerIdInput.value = '';
+    keyInput.value = '';
+    customerIdInput.dispatchEvent(new Event('input'));
+    keyInput.dispatchEvent(new Event('input'));
+  });
+
+  (function prefillFromStorage() {
+    let savedCustomer = '', savedKey = '';
+    try {
+      savedCustomer = localStorage.getItem(LS_CUSTOMER) || '';
+      savedKey      = localStorage.getItem(LS_API_KEY)  || '';
+    } catch (_) {}
+    if (savedCustomer) {
+      customerIdInput.value = savedCustomer;
+      customerIdInput.dispatchEvent(new Event('input'));
+    }
+    if (savedKey) {
+      keyInput.value = savedKey;
+      keyInput.dispatchEvent(new Event('input'));
+    }
+    refreshForgetVisibility();
+  })();
+
+  /* ────────────────────────────────────────────────────────
+   *  Drop zones — built dynamically per tool
+   * ──────────────────────────────────────────────────────── */
+  function renderDropZones(zones) {
+    dropGrid.innerHTML = '';
+    dropGrid.classList.toggle('single', zones.length === 1);
+
+    for (const z of zones) {
+      const zoneEl = document.createElement('label');
+      zoneEl.className = 'drop-zone';
+      zoneEl.dataset.field = z.field;
+      zoneEl.innerHTML = `
+        <span class="drop-zone-label">${escapeHtml(z.label)}</span>
+        <span class="drop-zone-hint">${escapeHtml(z.hint)}</span>
+        <span class="drop-zone-file"></span>
+        <input type="file" name="${escapeAttr(z.field)}" accept="${escapeAttr(z.accept)}">
+      `;
+      dropGrid.appendChild(zoneEl);
+      wireDropZone(zoneEl, z.field);
+    }
+  }
+
+  function wireDropZone(zoneEl, field) {
+    const inputEl = zoneEl.querySelector('input[type="file"]');
+    const fileEl  = zoneEl.querySelector('.drop-zone-file');
+
+    const setFile = (file) => {
+      if (!file) return;
+      state.files[field] = file;
+      fileEl.innerHTML = `
+        <div class="file-head">
+          <span class="file-type-badge">${escapeHtml(extOf(file.name))}</span>
+          <span class="file-name">${escapeHtml(file.name)}</span>
+          <button type="button" class="file-remove" data-action="remove">Remove</button>
+        </div>
+        <span class="file-meta">${formatBytes(file.size)}</span>
+      `;
+      zoneEl.classList.add('has-file');
+      updateSubmitState();
+    };
+
+    const clearFile = () => {
+      delete state.files[field];
+      try { inputEl.value = ''; } catch (_) {}
+      fileEl.innerHTML = '';
+      zoneEl.classList.remove('has-file');
+      updateSubmitState();
+    };
+
+    inputEl.addEventListener('change', () => setFile(inputEl.files[0]));
+
+    zoneEl.addEventListener('dragover',  (e) => { e.preventDefault(); zoneEl.classList.add('dragover'); });
+    zoneEl.addEventListener('dragleave', ()  => zoneEl.classList.remove('dragover'));
+    zoneEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zoneEl.classList.remove('dragover');
+      const f = e.dataTransfer && e.dataTransfer.files[0];
+      if (!f) return;
+      try { const dt = new DataTransfer(); dt.items.add(f); inputEl.files = dt.files; } catch (_) {}
+      setFile(f);
+    });
+
+    fileEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="remove"]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      clearFile();
+    });
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  Submit-button enablement
+   * ──────────────────────────────────────────────────────── */
+  function updateSubmitState() {
+    const needed = state.tool ? TOOLS[state.tool].zones.map(z => z.field) : [];
+    const allFiles = needed.length > 0 && needed.every(f => state.files[f]);
+    const ready = !!state.tool && state.customerId.length > 0 && state.keyValid && allFiles;
+    submitBtn.disabled = !ready;
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  Submit handler
+   * ──────────────────────────────────────────────────────── */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (submitBtn.disabled) return;
+
+    const tool = TOOLS[state.tool];
+    if (!tool) return;
+
+    submitBtn.disabled = true;
+    engineState.classList.add('show');
+    setStatus('info', 'Signing request and uploading payload…');
+    const startedAt = performance.now();
+
+    try {
+      // Read every file's bytes
+      const parts = [];
+      for (const z of tool.zones) {
+        const file = state.files[z.field];
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        parts.push({
+          name: z.field,
+          filename: file.name,
+          contentType: contentTypeForName(file.name),
+          data: bytes,
+        });
+      }
+
+      const { boundary, body } = buildMultipart(parts);
+
+      // Sign over `${timestamp}.` + body bytes — mirrors lib/auth/hmac.js
+      const timestamp = String(Math.floor(Date.now() / 1000));
+      const sigHex = await hmacSha256Hex(keyInput.value.trim(), `${timestamp}.`, body);
+
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type':    `multipart/form-data; boundary=${boundary}`,
+          'X-SLS-Tool':      tool.header,
+          'X-SLS-Customer':  state.customerId,
+          'X-SLS-Timestamp': timestamp,
+          'X-SLS-Signature': `sha256=${sigHex}`,
+        },
+        body,
+      });
+
+      const elapsed = Math.round(performance.now() - startedAt);
+
+      if (!res.ok) {
+        const text = await res.text();
+        setStatus('error', `Server returned ${res.status} ${res.statusText}: ${text || '(no body)'}`);
+        return;
+      }
+
+      const blob = await res.blob();
+      const filename = filenameFromHeader(res.headers.get('Content-Disposition')) || defaultFilename(tool.header);
+      triggerDownload(blob, filename);
+
+      setStatus('success', `Report ready in ${elapsed} ms. Downloaded as ${filename}.`);
+
+      // Reset so file references don't linger in the form
+      resetForm();
+    } catch (err) {
+      setStatus('error', `Submission failed: ${err && err.message ? err.message : String(err)}`);
+    } finally {
+      engineState.classList.remove('show');
+      updateSubmitState();
+    }
+  });
+
+  function resetForm() {
+    state.files = {};
+    if (state.tool) renderDropZones(TOOLS[state.tool].zones);
+    updateSubmitState();
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  Status panel
+   * ──────────────────────────────────────────────────────── */
+  function setStatus(kind, msg) {
+    statusPanel.className = `status-panel show ${kind}`;
+    statusPanel.textContent = msg;
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  Multipart builder — manual so the bytes we sign are
+   *  the exact bytes we send (FormData would pick its own
+   *  boundary internally).
+   * ──────────────────────────────────────────────────────── */
+  function buildMultipart(parts) {
+    const boundary = '----SLSBoundary' + randomHex(16);
+    const enc = new TextEncoder();
+    const segs = [];
+    for (const p of parts) {
+      segs.push(enc.encode(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="${p.name}"; filename="${p.filename}"\r\n` +
+        `Content-Type: ${p.contentType}\r\n\r\n`
+      ));
+      segs.push(p.data);
+      segs.push(enc.encode('\r\n'));
+    }
+    segs.push(enc.encode(`--${boundary}--\r\n`));
+
+    const total = segs.reduce((s, b) => s + b.byteLength, 0);
+    const body = new Uint8Array(total);
+    let off = 0;
+    for (const s of segs) { body.set(s, off); off += s.byteLength; }
+    return { boundary, body };
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  HMAC-SHA256(secret, prefixUtf8 || bodyBytes) → hex
+   *  Mirrors lib/auth/hmac.js: server does the equivalent of
+   *    hmac.update(`${timestamp}.`).update(body)
+   *  Secret is treated as a UTF-8 string (Node's default for
+   *  createHmac('sha256', secret) when secret is a string),
+   *  not as a hex-encoded byte array.
+   *  We concatenate the two byte runs into one buffer and
+   *  call crypto.subtle.sign('HMAC', key, msg) once — same
+   *  bytes, same digest.
+   * ──────────────────────────────────────────────────────── */
+  async function hmacSha256Hex(secret, prefixStr, bodyBytes) {
+    const keyBytes = new TextEncoder().encode(secret);
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    const prefix = new TextEncoder().encode(prefixStr);
+    const msg = new Uint8Array(prefix.byteLength + bodyBytes.byteLength);
+    msg.set(prefix, 0);
+    msg.set(bodyBytes, prefix.byteLength);
+    const sig = await crypto.subtle.sign('HMAC', key, msg);
+    return Array.from(new Uint8Array(sig), b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  /* ────────────────────────────────────────────────────────
+   *  Misc helpers
+   * ──────────────────────────────────────────────────────── */
+  function randomHex(bytes) {
+    const a = new Uint8Array(bytes);
+    crypto.getRandomValues(a);
+    return Array.from(a, b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function contentTypeForName(name) {
+    const ext = extOf(name).toLowerCase();
+    if (ext === 'csv')  return 'text/csv';
+    if (ext === 'xls')  return 'application/vnd.ms-excel';
+    if (ext === 'xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    return 'application/octet-stream';
+  }
+
+  function extOf(name) {
+    const i = name.lastIndexOf('.');
+    return i >= 0 ? name.slice(i + 1) : '';
+  }
+
+  function formatBytes(n) {
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / 1024 / 1024).toFixed(2)} MB`;
+  }
+
+  function filenameFromHeader(cd) {
+    if (!cd) return null;
+    const m = /filename="?([^"]+)"?/i.exec(cd);
+    return m ? m[1] : null;
+  }
+
+  function defaultFilename(toolHeader) {
+    const stamp = new Date().toISOString().slice(0, 10);
+    return `${toolHeader}-${stamp}.html`;
+  }
+
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function escapeAttr(s) { return escapeHtml(s); }
+})();
+</script>
+
+</body>
+</html>
