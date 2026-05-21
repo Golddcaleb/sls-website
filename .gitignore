@@ -11,3 +11,6 @@ sample-data/
 
 # Test submission output
 scripts/output/
+
+# Pre-cleanup backups (one-off, dated)
+_pre-cleanup-backup-*/
