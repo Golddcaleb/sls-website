@@ -1,7 +1,8 @@
 # SLS Priorities
-*Last updated: May 26, 2026*
+*Last updated: May 26, 2026 (PM-2)*
 
 ## Immediate
+- [ ] **First PO Tracker customer onboarding** — when the first customer commits, work them through M365 app registration (`Mail.Read`, `Mail.Send`, `Sites.ReadWrite.All`), call `/.netlify/functions/onboard-customer`, paste returned env vars into Netlify, redeploy. Then verify the Graph webhook fires and the dashboard reads back live → [[PO Tracker]]
 - [ ] **Receive fresh Matrix + Proper 21 exports from Travis** once Blue Ash / DRT owner meeting is arranged — run a clean reconciliation report for that presentation → [[Blue Ash Industrial Supply]]
 - [ ] **Text Aaron Satterfield** — confirm Derek intro email went out; follow up by call May 30 if no response → [[DXP_Enterprises_Inc]]
 - [ ] **Await DXP intro email** — reply same day once it lands, propose 20–30 min call with Derek → [[DXP_Enterprises_Inc]]
@@ -36,6 +37,7 @@
 - [x] **Identity-mismatch detection** — surfaces lines where PO + qty + unit price agree but item codes differ (SPOTBUY placeholder ↔ real supplier part). Dropped unmatched count on the DRT run from 17 → 11. Live on production (May 26)
 - [x] **PDF export landscape fix** — `@page { size: landscape }` + fixed table layout in `lib/render/report-builder.js` so the wider tables (identity mismatches, unmatched, matches) keep all columns inside the printable area (May 26)
 - [x] **Submit page file auto-detection** — backend detects Matrix vs Proper 21 from column header signatures and swaps internally if the user dropped them in the wrong zones (May 26)
+- [x] **PO Tracker MVP — full build + production deploy** — second SLS product live end-to-end: per-customer Graph API integration (auth, inbox monitor, email parser/sender, SharePoint reader/writer), processing engine (lead-time, constraint-shift, follow-up triggers w/ Stage 1+2 templates), onboarding endpoint, dashboard with Settings/Jobs/Queue/Alerts panels, daily webhook-subscription renewer. 16 new files + `process.js` po-tracking case. Customer data never touches SLS infra — all state lives in the customer's M365 tenant. Commits `4da2756`, `907f76e` (merge), `ca1211b`. Deployed to `main@ca1211b` via Netlify (May 26 PM) → [[PO Tracker]]
 
 ## On Hold
 - AMEND Consulting — re-engaged May 19 via voicemail, awaiting callback → [[AMEND Consulting]]
@@ -51,7 +53,8 @@
 1. Confirm Derek (DXP) intro email landed — text Aaron Satterfield; call by May 30 if silent
 2. Reply same-day to Derek's intro once it arrives — propose 20–30 min call
 3. Receive fresh Matrix + Proper 21 exports from Travis ahead of Blue Ash / DRT owner meeting; run clean reconciliation report for presentation
-4. Repo structure cleanup (nested git repos, root-level submit.html shadows, parent working-tree restore)
-5. Add backend unit tests (render composers + parse-multipart)
-6. SOW/MSA legal fixes before Blue Ash goes live
-7. Stripe activation
+4. Open PO Tracker conversation with first interested customer (likely Blue Ash if they bite, or whoever surfaces via DXP intro). Trigger: customer commits → run onboarding flow
+5. Repo structure cleanup (nested git repos, root-level submit.html shadows, parent working-tree restore)
+6. Add backend unit tests (render composers + parse-multipart, plus new PO tracker analyzers)
+7. SOW/MSA legal fixes before Blue Ash goes live
+8. Stripe activation
