@@ -44,6 +44,7 @@
 const { verifySignature }      = require('../../lib/auth/hmac');
 const { parseMultipart }       = require('../../lib/ingest/parse-multipart');
 const { parseFile }            = require('../../lib/ingest/parse-csv');
+const { assignSides }          = require('../../lib/ingest/detect-inventory-side');
 const { normalize }            = require('../../lib/normalize/column-mapper');
 const inventorySchema          = require('../../lib/normalize/schemas/inventory');
 const jobsSchema               = require('../../lib/normalize/schemas/jobs');
@@ -139,21 +140,42 @@ function slugify(s) {
  * @returns {{ statusCode:number, body:string, filename?:string, html?:string, status?:string }}
  */
 function runShipVsInvoice(parts, ctx) {
-  const matrixPart   = parts.find(p => p.name === 'matrix');
-  const proper21Part = parts.find(p => p.name === 'proper21');
+  const aPart = parts.find(p => p.name === 'matrix');
+  const bPart = parts.find(p => p.name === 'proper21');
 
-  if (!matrixPart || !proper21Part) {
+  if (!aPart || !bPart) {
     return { statusCode: 400, body: 'Bad Request: both "matrix" and "proper21" file fields are required.' };
   }
 
-  // ── Ingest ───────────────────────────────────────────────────────
-  const matrixParsed = parseFile(matrixPart.data, { filename: matrixPart.filename });
-  if (!matrixParsed.ok) {
-    return { statusCode: 400, body: `Bad Request: could not parse matrix file: ${matrixParsed.error}` };
+  // ── Ingest both sides ────────────────────────────────────────────
+  // Parse first, identify second. The drop-zone label the user picked
+  // is treated as a hint, not as truth — actual file identity is
+  // resolved from the column headers below.
+  const aParsed = parseFile(aPart.data, { filename: aPart.filename });
+  if (!aParsed.ok) {
+    return { statusCode: 400, body: `Bad Request: could not parse "${aPart.filename || 'matrix'}": ${aParsed.error}` };
   }
-  const p21Parsed = parseFile(proper21Part.data, { filename: proper21Part.filename });
-  if (!p21Parsed.ok) {
-    return { statusCode: 400, body: `Bad Request: could not parse proper21 file: ${p21Parsed.error}` };
+  const bParsed = parseFile(bPart.data, { filename: bPart.filename });
+  if (!bParsed.ok) {
+    return { statusCode: 400, body: `Bad Request: could not parse "${bPart.filename || 'proper21'}": ${bParsed.error}` };
+  }
+
+  // ── Header-signature classification ──────────────────────────────
+  // Decide which file is which from the column headers. If the two
+  // drop zones were used in reverse, this swap is transparent; if the
+  // files can't be told apart, refuse the run with a 422 so the user
+  // can fix it rather than silently process the wrong assignment.
+  const assignment = assignSides(
+    { name: aPart.filename || 'matrix-slot',   columns: aParsed.columns, parsed: aParsed },
+    { name: bPart.filename || 'proper21-slot', columns: bParsed.columns, parsed: bParsed },
+  );
+  if (!assignment.ok) {
+    return { statusCode: 422, body: `Unprocessable: ${assignment.error}` };
+  }
+  const matrixParsed = assignment.matrix.parsed;
+  const p21Parsed    = assignment.proper21.parsed;
+  if (assignment.swapped) {
+    console.log(`[process] auto-swapped drop zones: "${aPart.filename}" detected as Proper 21, "${bPart.filename}" detected as Matrix`);
   }
 
   // ── Normalize ────────────────────────────────────────────────────
