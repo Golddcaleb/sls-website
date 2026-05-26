@@ -14,3 +14,7 @@ scripts/output/
 
 # Pre-cleanup backups (one-off, dated)
 _pre-cleanup-backup-*/
+
+# Personal session logs — live in the canonical Obsidian vault
+# at G:\My Drive\vault\05-Claude-Sessions\, not in the repo
+docs/05-Claude-Sessions/
