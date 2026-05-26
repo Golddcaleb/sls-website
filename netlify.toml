@@ -2,3 +2,9 @@
   publish = "signallogicsystems-site"
   functions = "netlify/functions"
 
+# Graph mailbox subscriptions expire after ~70h; renew daily to stay
+# well ahead of the cap. Function is also invocable via HTTP (with the
+# admin bearer token) for manual triggering.
+[functions."renew-subscriptions"]
+  schedule = "@daily"
+
