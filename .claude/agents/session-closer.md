@@ -42,7 +42,11 @@ This ensures any files written during the session are pushed back to the authori
 (Note: robocopy returns non-zero exit codes for normal success — `0` no change, `1` files copied — so don't chain it with `&&` in a script. In the agent flow, treat any exit code under 8 as success.)
 
 ### 6. Write the session note
-Append a new session note in `docs/05-Claude-Sessions/Sessions/` using the structure in `docs/05-Claude-Sessions/Templates/Session Close Template.md`. The template already includes the "Claude.ai Project — Files to Re-Upload" checklist at the bottom — keep that section and fill it in with the specific files updated this session so the next session has a one-click ramp-up.
+Write a new session note **directly to the vault** at `G:\My Drive\vault\05-Claude-Sessions\Sessions\` using the canonical template at `G:\My Drive\vault\05-Claude-Sessions\Templates\Session Close Template.md`. Filename convention: `YYYY-MM-DD <Short Description>.md`.
+
+This step deliberately **bypasses the repo and the Step 5 robocopy** — session notes are personal logs, not project artifacts, and don't belong in git history. The Step 5 mirror only covers `C:\Users\Caleb\sls-project\docs → G:\My Drive\vault\02-SLS` and would route session notes to the wrong vault location anyway (under `02-SLS\` rather than the vault root). Writing straight to the canonical Sessions folder skips that detour entirely.
+
+The template already includes the "Claude.ai Project — Files to Re-Upload" checklist at the bottom; keep that section and fill it in with the specific files updated this session so the next session has a one-click ramp-up.
 
 ## Rules
 - Do not commit files matching `.gitignore` patterns
