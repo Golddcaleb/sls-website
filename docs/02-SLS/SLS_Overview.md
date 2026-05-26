@@ -23,7 +23,7 @@ Pricing: one-time setup fee + monthly service fee. Four tiers (Starter → Enter
 | Product | Status |
 |---|---|
 | [[Job Flow Monitor]] | Phase 1 complete, Phase 2 in progress |
-| [[02-SLS/sls-project/docs/02-SLS/Products/PO Tracker]] | Planned |
+| [[PO Tracker]] | Planned |
 
 ## Active Clients / Leads
 | Company                        | Status                                                                                 | Contact                       |
