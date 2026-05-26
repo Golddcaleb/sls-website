@@ -1,7 +1,10 @@
 # SLS Priorities
-*Last updated: May 20, 2026*
+*Last updated: May 26, 2026*
 
 ## Immediate
+- [ ] **Receive fresh Matrix + Proper 21 exports from Travis** once Blue Ash / DRT owner meeting is arranged — run a clean reconciliation report for that presentation → [[Blue Ash Industrial Supply]]
+- [ ] **Text Aaron Satterfield** — confirm Derek intro email went out; follow up by call May 30 if no response → [[DXP_Enterprises_Inc]]
+- [ ] **Await DXP intro email** — reply same day once it lands, propose 20–30 min call with Derek → [[DXP_Enterprises_Inc]]
 - [ ] **Backend unit tests** — dedicated tests for `render/job-flow`, `render/inventory/ship-vs-invoice`, `analyze/inventory/ship-vs-invoice`, and `parse-multipart` (assert section/class presence, not HTML snapshots)
 - [ ] **Repo structure cleanup** — two competing git repos for the same code (parent at `02-SLS/sls-project/` and nested at `signallogicsystems-site/`); pick a source of truth, retire the other. Also delete the root-level `submit.html`/`submit-jfm.html` shadows in the nested repo and restore the parent's `signallogicsystems-site/` working tree after the May 20 reset
 - [ ] **SOW/MSA legal gaps** — blank placeholders, section numbering, consequential damages exclusion, confidentiality survival clause
@@ -9,7 +12,7 @@
 - [ ] **Google Business Profile** — verification still in progress
 
 ## In Progress
-- [ ] **Blue Ash demo call** — awaiting Travis's corrected date-matched Matrix + Proper 21 exports (May 20 smoke run hit 0% match because the two files covered different months, not a pipeline bug) → [[Blue Ash Industrial Supply]]
+*(nothing currently in-flight — see Immediate for next moves)*
 
 ## Done
 - [x] Website live at signallogicsystems.com
@@ -29,6 +32,10 @@
 - [x] **Customer-facing upload UI** — unified `submit.html` portal: tool selector, Customer ID + paste-key, localStorage credential persistence with Forget link, client-side HMAC-SHA256 via Web Crypto, morphing drop zones, inline status panel (May 20)
 - [x] **HMAC key derivation aligned** — server-side `lib/auth/hmac.js` and the new client both treat the secret as a UTF-8 string, not a hex-decoded byte buffer (May 20)
 - [x] **End-to-end production submission verified from the new portal UI** — 200 OK in 1,838 ms with a real Blue Ash payload against the deployed Netlify function (May 20)
+- [x] **Blue Ash Phase 1 demo call** — walked Travis through the live ship-vs-invoice report on his real DRT data. Travis confirmed "that looks much better" and "I think we took a big step today." Forwarding to Terry at DRT, arranging owner intro meeting (May 26) → [[Blue Ash Industrial Supply]]
+- [x] **Identity-mismatch detection** — surfaces lines where PO + qty + unit price agree but item codes differ (SPOTBUY placeholder ↔ real supplier part). Dropped unmatched count on the DRT run from 17 → 11. Live on production (May 26)
+- [x] **PDF export landscape fix** — `@page { size: landscape }` + fixed table layout in `lib/render/report-builder.js` so the wider tables (identity mismatches, unmatched, matches) keep all columns inside the printable area (May 26)
+- [x] **Submit page file auto-detection** — backend detects Matrix vs Proper 21 from column header signatures and swaps internally if the user dropped them in the wrong zones (May 26)
 
 ## On Hold
 - AMEND Consulting — re-engaged May 19 via voicemail, awaiting callback → [[AMEND Consulting]]
@@ -41,8 +48,10 @@
 - Self-hosted Cal.com (replace Calendly)
 
 ## Next Actions
-1. Follow up with Travis on corrected date-matched exports → re-run production smoke → schedule demo call (Tue/Thu)
-2. Repo structure cleanup (nested git repos, root-level submit.html shadows, parent working-tree restore)
-3. Add backend unit tests (render composers + parse-multipart)
-4. SOW/MSA legal fixes before Blue Ash goes live
-5. Stripe activation
+1. Confirm Derek (DXP) intro email landed — text Aaron Satterfield; call by May 30 if silent
+2. Reply same-day to Derek's intro once it arrives — propose 20–30 min call
+3. Receive fresh Matrix + Proper 21 exports from Travis ahead of Blue Ash / DRT owner meeting; run clean reconciliation report for presentation
+4. Repo structure cleanup (nested git repos, root-level submit.html shadows, parent working-tree restore)
+5. Add backend unit tests (render composers + parse-multipart)
+6. SOW/MSA legal fixes before Blue Ash goes live
+7. Stripe activation

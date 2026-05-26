@@ -3,7 +3,7 @@
 **Type:** Tooling/supply distributor
 **Location:** 6909 Cornell Rd, Cincinnati, OH 45242
 **Website:** blueashsupply.com
-**Status:** 🔥 Active — exports requested, Phase 1 build pending
+**Status:** 🔥 Active — Phase 1 demo delivered, Travis arranging owner intro meeting via Terry at DRT
 
 ---
 
@@ -50,7 +50,7 @@ No PO tracking means items aren't flagged as constraints until it's too late to 
 ## Proposed Engagement
 
 ### Phase 1: Ship-vs-Invoice Reconciliation
-**Status:** ⏳ Awaiting exports from Travis
+**Status:** ✅ Demo delivered May 26 — awaiting owner meeting before go-live signing
 **Setup Fee:** $750
 **Monthly Fee:** $175/mo
 **Timeline:** 2–3 weeks from receipt of exports
@@ -67,12 +67,13 @@ No PO tracking means items aren't flagged as constraints until it's too late to 
 - [x] Send follow-up email + MSA (May 13)
 - [x] Follow-up call — confirmed exports coming (May 19)
 - [x] Confirm export format — XLSX agreed (May 19)
-- [ ] Receive Matrix receipts XLSX from Travis
-- [ ] Receive Proper 21 invoices export from Travis
-- [ ] Confirm exports are usable, clarify any field questions
-- [ ] Build Phase 1 demo (~2 weeks)
-- [ ] Schedule demo call (Tuesday or Thursday)
-- [ ] Demo call — walk Travis through live output on his own data
+- [x] Receive Matrix receipts XLSX from Travis (May 26)
+- [x] Receive Proper 21 invoices export from Travis (May 26)
+- [x] Confirm exports are usable, clarify any field questions (May 26 — required schema realignment: customer_part_number is the join, "PO Detail" carries PO_DTL_KEY)
+- [x] Build Phase 1 demo (~2 weeks)
+- [x] Schedule demo call (May 26)
+- [x] Demo call — walk Travis through live output on his own data (May 26 — Travis: "that looks much better" / "I think we took a big step today")
+- [ ] Owner intro meeting (Travis arranging via Terry at DRT)
 - [ ] Get MSA signed
 - [ ] Go-live
 - [ ] Measure time saved vs. baseline
@@ -121,15 +122,20 @@ No PO tracking means items aren't flagged as constraints until it's too late to 
 | May 13, 2026 | Follow-up email sent + MSA attached | ✅ Done |
 | May 19, 2026 | Follow-up call — Travis confirmed exports coming | ✅ Done |
 | May 19, 2026 | Travis confirmed XLSX as export format | ✅ Done |
-| TBD | Receive exports (Matrix + Proper 21) | ⏳ Pending |
-| TBD + 2 days | Confirm exports usable, schedule demo call | ⏳ Pending |
-| TBD + 14 days | Phase 1 demo complete | ⏳ Target |
-| TBD + 17 days | Demo call with Travis | ⏳ Target |
-| TBD + 21 days | Phase 1 go-live | ⏳ Target |
+| May 26, 2026 | Received Matrix + Proper 21 exports from Travis | ✅ Done |
+| May 26, 2026 | Schema realignment against real DRT files (customer_part_number join, PO_DTL_KEY from Matrix) | ✅ Done |
+| May 26, 2026 | **Demo call — Travis walked through live report on his own data** | ✅ Done |
+| May 26, 2026 | Identity-mismatch section added + report re-shared post-call | ✅ Done |
+| TBD | Owner intro meeting (Travis arranging via Terry at DRT) | ⏳ Pending |
+| TBD + 7 days | MSA signed | ⏳ Target |
+| TBD + 14 days | Phase 1 go-live | ⏳ Target |
 
 ---
 
 ## Call & Interaction Log
+
+### May 26, 2026 — Phase 1 Demo Call
+Walked Travis through the live ship-vs-invoice reconciliation report on his real DRT data — 198 matches, 2 mismatches with pre-filled SQL UPDATE blocks (ENT_PO_DETAILS + ENT_TRANSACTION_LOG keyed by PO_DTL_KEY), 3 wrong-PO, 11 unmatched. Travis: *"that looks much better"* and *"I think we took a big step today."* He's forwarding the report to **Terry at DRT** and arranging an owner intro meeting. Post-call, added an **Identity Mismatch** section that lifts pairs where PO + qty + unit price match but item codes differ (SPOTBUY placeholder ↔ supplier part number) — unmatched count dropped from 17 → 11. Re-sent the updated report. Also pushed two follow-on fixes prompted by the call: landscape-mode PDF export so wide tables don't clip, and backend file-side auto-detection so the two upload zones don't depend on the user picking the right slot.
 
 ### May 19, 2026 — Export Format Email
 Travis sent Matrix export format options. Replied recommending XLSX. Also nudged him to send Proper 21 export at the same time.
@@ -165,4 +171,4 @@ Sent Phase 1 proposal, MSA attached, requested two exports (Matrix receipts + Pr
 
 ---
 
-*Last updated: May 19, 2026*
+*Last updated: May 26, 2026*

@@ -1,6 +1,6 @@
 # SLS — Master Overview
 *Signal Logic Systems LLC*
-*Last updated: May 19, 2026*
+*Last updated: May 26, 2026*
 
 ## The Business
 B2B manufacturing analytics. Pre-revenue, active development.
@@ -23,14 +23,15 @@ Pricing: one-time setup fee + monthly service fee. Four tiers (Starter → Enter
 | Product | Status |
 |---|---|
 | [[Job Flow Monitor]] | Phase 1 complete, Phase 2 in progress |
-| [[PO Tracker]] | Planned |
+| [[02-SLS/sls-project/docs/02-SLS/Products/PO Tracker]] | Planned |
 
 ## Active Clients / Leads
-| Company                        | Status                             | Contact         |
-| ------------------------------ | ---------------------------------- | --------------- |
-| [[Blue Ash Industrial Supply]] | Hot lead — awaiting XLSX exports   | Travis Thompson |
-| [[Enterprise_Machine_Inc]]     | First contact sent — email May 19  | Scott Hammer    |
-| [[AMEND_Consulting]]           | Voicemail left May 19 — re-engaged | Woods King      |
+| Company                        | Status                                                                                 | Contact                       |
+| ------------------------------ | -------------------------------------------------------------------------------------- | ----------------------------- |
+| [[Blue Ash Industrial Supply]] | Phase 1 demo delivered May 26 — Travis arranging owner intro via Terry at DRT          | Travis Thompson               |
+| [[DXP_Enterprises_Inc]]        | Pending warm intro via Aaron Satterfield                                               | Derek (owner)                 |
+| [[Enterprise_Machine_Inc]]     | First contact sent — email May 19                                                      | Scott Hammer                  |
+| [[AMEND_Consulting]]           | Voicemail left May 19 — re-engaged                                                     | Woods King                    |
 
 ## Current Priorities
 → [[SLS Priorities]]
