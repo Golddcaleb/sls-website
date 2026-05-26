@@ -1,6 +1,6 @@
 @echo off
 echo Syncing SLS docs from vault...
-xcopy "G:\My Drive\vault\02-SLS\*.md" "C:\Users\Caleb\sls-project\docs\" /Y /S /Q
+robocopy "G:\My Drive\vault\02-SLS" "C:\Users\Caleb\sls-project\docs" *.md /S /XD sls-project /NFL /NDL /NJH /NJS /NP >nul
 echo Done. Launching Claude Code...
 cd /d C:\Users\Caleb\sls-project
 claude

@@ -34,10 +34,12 @@ Output:
 After the commit lands, push all doc edits made during the session back to the authoritative vault on Google Drive so Obsidian and other devices see them. Run:
 
 ```
-xcopy "C:\Users\Caleb\sls-project\docs\*.md" "G:\My Drive\vault\02-SLS\" /Y /S /Q
+robocopy "C:\Users\Caleb\sls-project\docs" "G:\My Drive\vault\02-SLS" *.md /S /XD sls-project /NFL /NDL /NJH /NJS /NP
 ```
 
-This ensures any files written during the session are pushed back to the authoritative vault location on Google Drive. The xcopy is one-way (working copy → vault) and intentionally narrow — only `*.md` under `docs/` is in scope, so generated artifacts (HTML reports, build outputs) are not synced.
+This ensures any files written during the session are pushed back to the authoritative vault location on Google Drive. The copy is one-way (working copy → vault) and intentionally narrow — only `*.md` is in scope, and `/XD sls-project` prevents the git-repo subfolder inside the vault from ever being overwritten by stale working-copy content. The mirror direction is symmetric with `start-sls.bat`, which uses the same exclude.
+
+(Note: robocopy returns non-zero exit codes for normal success — `0` no change, `1` files copied — so don't chain it with `&&` in a script. In the agent flow, treat any exit code under 8 as success.)
 
 ### 6. Write the session note
 Append a new session note in `docs/05-Claude-Sessions/Sessions/` using the structure in `docs/05-Claude-Sessions/Templates/Session Close Template.md`. The template already includes the "Claude.ai Project — Files to Re-Upload" checklist at the bottom — keep that section and fill it in with the specific files updated this session so the next session has a one-click ramp-up.
