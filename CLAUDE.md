@@ -35,8 +35,8 @@ Snapshot-based derived metrics only. Retained 60 days, deleted on termination.
 
 | Tool | Status | Description |
 |------|--------|-------------|
-| Job Flow Monitor | MVP demo built, engine needed | Constraint ID, revenue at risk, cascade analysis |
-| PO Tracking & Follow-Up | Planned | Lead time monitoring, automated supplier follow-up |
+| Job Flow Monitor | MVP built, demoed on real customer data | Constraint ID, revenue at risk, cascade analysis |
+| PO Tracking & Follow-Up | MVP built, awaiting first customer | Lead time monitoring, automated supplier follow-up; runs in-tenant via Graph API |
 
 ---
 
