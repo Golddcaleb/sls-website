@@ -48,10 +48,12 @@ const { assignSides }          = require('../../lib/ingest/detect-inventory-side
 const { normalize }            = require('../../lib/normalize/column-mapper');
 const inventorySchema          = require('../../lib/normalize/schemas/inventory');
 const jobsSchema               = require('../../lib/normalize/schemas/jobs');
+const purchaseOrdersSchema     = require('../../lib/normalize/schemas/purchase-orders');
 const { shipVsInvoice }        = require('../../lib/analyze/inventory/ship-vs-invoice');
 const { renderShipVsInvoice }  = require('../../lib/render/inventory/ship-vs-invoice');
 const { analyzeJobFlow }       = require('../../lib/analyze/job-flow');
 const { renderJobFlow }        = require('../../lib/render/job-flow/job-flow');
+const { upsertRecord }         = require('../../lib/integrations/graph-api/sharepoint-writer');
 
 // ---------------------------------------------------------------------------
 // Customer registry
@@ -271,6 +273,106 @@ function runJobFlow(parts, ctx) {
   return { statusCode: 200, html, filename, status };
 }
 
+/**
+ * Run the PO Tracking ingest pipeline end to end.
+ *
+ * Differs from the report-style pipelines: instead of producing an HTML
+ * attachment, this pipeline writes tracking records into the customer's
+ * own SharePoint list and returns a JSON confirmation. The
+ * "hold-the-calculator" principle still holds — the CSV is parsed in
+ * memory, normalized, grouped, written across the tenant boundary, and
+ * the buffer is discarded.
+ *
+ * Accepts a single file part. Field name is `po` by convention but
+ * any sole part is accepted.
+ *
+ * @param {Array<{name:string, filename:string|null, contentType:string|null, data:Buffer}>} parts
+ * @param {object} ctx
+ * @param {string} ctx.customerId
+ * @param {Date}   ctx.today
+ * @returns {Promise<{ statusCode:number, body?:string, json?:object, status?:string }>}
+ */
+async function runPoTracking(parts, ctx) {
+  const poPart = parts.find(p => p.name === 'po')
+    || (parts.length === 1 ? parts[0] : null);
+
+  if (!poPart) {
+    return { statusCode: 400, body: 'Bad Request: a "po" file field is required.' };
+  }
+
+  // ── Ingest ───────────────────────────────────────────────────────
+  const parsed = parseFile(poPart.data, { filename: poPart.filename });
+  if (!parsed.ok) {
+    return { statusCode: 400, body: `Bad Request: could not parse PO file: ${parsed.error}` };
+  }
+
+  // ── Normalize ────────────────────────────────────────────────────
+  const norm = normalize(parsed, purchaseOrdersSchema);
+  if (!norm.ok) {
+    return { statusCode: 422, body: `Unprocessable PO file: ${norm.error}` };
+  }
+
+  // ── Group flat rows by po_number into tracking records ───────────
+  // Flat ERP exports give us one row per line item. Tracking records
+  // are PO-centric (one record per po_number) with a line_items array.
+  const recordsByPo = new Map();
+  for (const row of norm.rows) {
+    if (!row.po_number) continue;
+    let rec = recordsByPo.get(row.po_number);
+    if (!rec) {
+      rec = {
+        po_number:           row.po_number,
+        vendor:              row.vendor || '',
+        job_id:              row.job_id || '',
+        timer_start:         row.order_date || ctx.today.toISOString().slice(0, 10),
+        ack_received_date:   row.ack_received_date || null,
+        stage:               row.stage || 'STAGE_1',
+        constraint_flag:     false,
+        line_items:          [],
+        line_item_ship_dates: {},
+      };
+      recordsByPo.set(row.po_number, rec);
+    }
+    if (row.item_name) {
+      rec.line_items.push({
+        item_name: row.item_name,
+        quantity:  row.quantity || null,
+        unit:      row.unit || null,
+        estimated_ship_date: row.estimated_ship_date || null,
+      });
+      if (row.estimated_ship_date) {
+        rec.line_item_ship_dates[row.item_name] = row.estimated_ship_date;
+      }
+    }
+  }
+
+  // ── Write to customer SharePoint ─────────────────────────────────
+  let created = 0;
+  let updated = 0;
+  const errors = [];
+
+  for (const rec of recordsByPo.values()) {
+    const res = await upsertRecord(ctx.customerId, rec);
+    if (!res.ok) {
+      errors.push({ po_number: rec.po_number, error: res.error });
+      continue;
+    }
+    if (res.action === 'created') created++; else updated++;
+  }
+
+  const result = {
+    customer:   ctx.customerId,
+    processed:  recordsByPo.size,
+    created,
+    updated,
+    failed:     errors.length,
+    errors:     errors.slice(0, 10), // cap to keep response small
+  };
+
+  const status = `pos=${recordsByPo.size} created=${created} updated=${updated} failed=${errors.length}`;
+  return { statusCode: 200, json: result, status };
+}
+
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
@@ -340,6 +442,9 @@ exports.handler = async (event) => {
       case 'job-flow':
         outcome = runJobFlow(multipart.parts, { customerId, today });
         break;
+      case 'po-tracking':
+        outcome = await runPoTracking(multipart.parts, { customerId, today });
+        break;
       default:
         return textResponse(400, `Bad Request: unknown tool "${tool}".`);
     }
@@ -351,6 +456,19 @@ exports.handler = async (event) => {
 
     const elapsed = Date.now() - startedAt;
     console.log(`[process] ok customer="${customerId}" tool="${tool}" ${outcome.status} elapsed=${elapsed}ms`);
+
+    // PO tracking returns JSON confirmation; report tools return HTML
+    // attachments. Branch on response shape.
+    if (outcome.json) {
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-store',
+        },
+        body: JSON.stringify(outcome.json),
+      };
+    }
 
     return htmlAttachment(outcome.html, outcome.filename);
   } catch (err) {

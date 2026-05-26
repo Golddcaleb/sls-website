@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PO Tracker — Signal Logic Systems</title>
+  <meta name="description" content="Signal Logic Systems PO tracking dashboard.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="signallogicsystems-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="po-dashboard.js" defer></script>
+  <style>
+    /* ─── PO Dashboard scoped styles ───────────────────────── */
+    .po-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+    .po-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+    .po-header h1 { font-size: 1.85rem; letter-spacing: .5px; }
+    .po-header .meta {
+      font-size: .78rem;
+      color: var(--text-secondary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .po-header .meta code { color: var(--gold); }
+
+    /* Tab bar */
+    .po-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+    .po-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: .85rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: .85rem 1.4rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .po-tab:hover { color: var(--text-primary); }
+    .po-tab.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+    .po-tab .count-badge {
+      display: inline-block;
+      margin-left: .45rem;
+      padding: 0 .45rem;
+      min-width: 1.4rem;
+      border-radius: 999px;
+      background: rgba(244,197,66,.16);
+      color: var(--gold);
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: 0;
+      font-family: var(--font-body);
+    }
+
+    /* Panels */
+    .po-panel { display: none; }
+    .po-panel.active { display: block; }
+
+    /* Cards */
+    .po-card {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
+      padding: 1.5rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .po-card h2 {
+      font-size: 1.2rem;
+      letter-spacing: .5px;
+      margin-bottom: .25rem;
+    }
+    .po-card .card-sub {
+      color: var(--text-secondary);
+      font-size: .85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Form controls */
+    .field-row {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) 1fr;
+      gap: 1rem;
+      align-items: center;
+      padding: .75rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,.05);
+    }
+    .field-row:last-of-type { border-bottom: none; }
+    .field-row label {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: .82rem;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+    .field-row .hint {
+      display: block;
+      font-family: var(--font-body);
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+      font-size: .8rem;
+      color: var(--text-secondary);
+      margin-top: .2rem;
+    }
+
+    input[type="text"], input[type="email"], input[type="number"], select, textarea {
+      background: rgba(0,0,0,.35);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: .55rem .75rem;
+      font-family: var(--font-body);
+      font-size: .9rem;
+      width: 100%;
+      max-width: 420px;
+      transition: border-color .15s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+    textarea { min-height: 100px; resize: vertical; max-width: 100%; }
+
+    /* Toggle */
+    .toggle {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      left: 2px; top: 1px;
+      width: 22px; height: 22px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      transition: left .2s ease, background .2s ease;
+    }
+    .toggle input:checked + .toggle-track {
+      background: rgba(244,197,66,.2);
+      border-color: var(--gold);
+    }
+    .toggle input:checked + .toggle-track::after {
+      left: 27px;
+      background: var(--gold);
+    }
+
+    .auto-send-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: rgba(244,197,66,.04);
+      border: 1px solid rgba(244,197,66,.22);
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+    }
+    .auto-send-row .label-block label {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold);
+      display: block;
+    }
+    .auto-send-row .hint {
+      font-size: .85rem;
+      color: var(--text-secondary);
+      margin-top: .25rem;
+    }
+
+    /* Keyword chips */
+    .keyword-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      padding: .25rem .6rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      color: var(--text-primary);
+    }
+    .chip button {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: .9rem;
+      line-height: 1;
+      padding: 0 .1rem;
+    }
+    .chip button:hover { color: #fca5a5; }
+
+    /* Buttons */
+    .po-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: var(--gold);
+      color: #1a1a1d;
+      border: none;
+      padding: .55rem 1.1rem;
+      border-radius: 6px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: .8rem;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+    .po-btn:hover { background: var(--gold-hover); }
+    .po-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .po-btn.ghost {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .po-btn.ghost:hover { border-color: var(--gold); color: var(--gold); }
+    .po-btn.danger { background: transparent; color: #fca5a5; border: 1px solid rgba(239,68,68,.4); }
+    .po-btn.danger:hover { background: rgba(239,68,68,.08); }
+
+    /* Tables */
+    .po-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    .po-table thead th {
+      text-align: left;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: .72rem;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: .65rem .75rem;
+    }
+    .po-table tbody td {
+      padding: .85rem .75rem;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      vertical-align: top;
+    }
+    .po-table tbody tr {
+      cursor: pointer;
+      transition: background .12s ease;
+    }
+    .po-table tbody tr:hover { background: rgba(255,255,255,.025); }
+    .po-table tbody tr.expanded { background: rgba(244,197,66,.04); }
+
+    .row-detail {
+      background: rgba(0,0,0,.3);
+      border-top: 1px solid var(--border);
+    }
+    .row-detail td { padding: 1rem 1.25rem; }
+    .row-detail .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: .75rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .row-detail .detail-grid div { font-size: .85rem; color: var(--text-secondary); }
+    .row-detail .detail-grid div strong { color: var(--text-primary); display: block; font-size: .72rem; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: .15rem; }
+    .row-detail .line-items-table { width: 100%; margin-top: .5rem; font-size: .85rem; }
+    .row-detail .line-items-table th { color: var(--gold); text-transform: uppercase; font-size: .7rem; letter-spacing: 1.3px; padding: .35rem .5rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .row-detail .line-items-table td { padding: .4rem .5rem; border-bottom: 1px solid rgba(255,255,255,.03); color: var(--text-primary); }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .2rem .6rem;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: .68rem;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+    }
+    .badge.on-track   { background: rgba(34,197,94,.12);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .badge.at-risk    { background: rgba(244,197,66,.12); color: var(--gold); border: 1px solid rgba(244,197,66,.35); }
+    .badge.overdue    { background: rgba(239,68,68,.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,.4); }
+    .badge.shifted    {
+      background: rgba(244,197,66,.18);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .badge.type-s1   { background: rgba(96,165,250,.12); color: #93c5fd; border: 1px solid rgba(96,165,250,.3); }
+    .badge.type-s2   { background: rgba(244,197,66,.12); color: var(--gold); border: 1px solid rgba(244,197,66,.3); }
+    .badge.type-cs   { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244,197,66,.5); }
+      50%      { box-shadow: 0 0 0 6px rgba(244,197,66,0); }
+    }
+
+    /* Queue list */
+    .queue-item {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: .85rem;
+    }
+    .queue-item-head {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+      cursor: pointer;
+    }
+    .queue-item-head .grow { flex: 1 1 auto; min-width: 0; }
+    .queue-item-head .subject { font-size: .92rem; font-weight: 500; color: var(--text-primary); }
+    .queue-item-head .meta { font-size: .78rem; color: var(--text-secondary); }
+    .queue-body {
+      display: none;
+      margin-top: .85rem;
+      padding-top: .85rem;
+      border-top: 1px solid var(--border);
+    }
+    .queue-body.show { display: block; }
+    .queue-body pre {
+      background: rgba(0,0,0,.3);
+      padding: .9rem 1rem;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .82rem;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .queue-actions { display: flex; gap: .5rem; margin-top: .85rem; flex-wrap: wrap; }
+    .queue-edit { display: none; margin-top: .85rem; }
+    .queue-edit.show { display: block; }
+    .queue-edit input, .queue-edit textarea {
+      max-width: 100%;
+      margin-bottom: .5rem;
+    }
+
+    /* Alerts */
+    .alert-item {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-left: 3px solid var(--gold);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      margin-bottom: .75rem;
+    }
+    .alert-item.severity-high   { border-left-color: #ef4444; }
+    .alert-item.severity-medium { border-left-color: var(--gold); }
+    .alert-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 1rem;
+      align-items: center;
+    }
+    .alert-grid > div { font-size: .85rem; }
+    .alert-grid strong { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-secondary); margin-bottom: .2rem; }
+
+    /* States */
+    .loading, .empty, .error-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-secondary);
+      font-size: .9rem;
+    }
+    .error-state { color: #fca5a5; }
+
+    /* Toast */
+    .toast-stack {
+      position: fixed; right: 1.25rem; bottom: 1.25rem;
+      display: flex; flex-direction: column; gap: .5rem;
+      z-index: 9999;
+    }
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      padding: .75rem 1.1rem;
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: .85rem;
+      max-width: 380px;
+      animation: slide-in .2s ease-out;
+    }
+    .toast.success { border-left-color: #4ade80; }
+    .toast.error   { border-left-color: #ef4444; color: #fca5a5; }
+    @keyframes slide-in {
+      from { transform: translateX(20px); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+
+    @media (max-width: 720px) {
+      .field-row { grid-template-columns: 1fr; }
+      .alert-grid { grid-template-columns: 1fr; }
+      .po-table thead { display: none; }
+      .po-table tbody td { display: block; padding: .3rem 0; border: none; }
+      .po-table tbody tr { padding: .85rem 0; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body class="grid-texture">
+
+<main class="po-wrap">
+
+  <header class="po-header">
+    <div>
+      <span class="section-label">Signal Logic Systems</span>
+      <h1>PO Tracker</h1>
+    </div>
+    <div class="meta">
+      Customer: <code id="customer-label">—</code>
+      &nbsp;·&nbsp; Updated: <code id="last-updated">—</code>
+    </div>
+  </header>
+
+  <nav class="po-tabs" role="tablist">
+    <button class="po-tab active" data-panel="active-jobs" role="tab">Active Jobs <span class="count-badge" id="count-jobs">0</span></button>
+    <button class="po-tab"        data-panel="queue"       role="tab">Email Queue <span class="count-badge" id="count-queue">0</span></button>
+    <button class="po-tab"        data-panel="alerts"      role="tab">Constraint Alerts <span class="count-badge" id="count-alerts">0</span></button>
+    <button class="po-tab"        data-panel="settings"    role="tab">Settings</button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL 2 — Active Jobs (default open)
+       ═══════════════════════════════════════════════════ -->
+  <section class="po-panel active" id="panel-active-jobs">
+    <div class="po-card">
+      <h2>Active Jobs</h2>
+      <p class="card-sub">Open tracking records across all jobs. Click a row to expand line item detail and per-job overrides.</p>
+      <div id="jobs-content">
+        <div class="loading">Loading tracking records…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL 3 — Email Queue
+       ═══════════════════════════════════════════════════ -->
+  <section class="po-panel" id="panel-queue">
+    <div class="po-card">
+      <h2>Email Queue</h2>
+      <p class="card-sub">Pending follow-ups awaiting review. Expand to read or edit before sending. The queue fills when auto-send is off.</p>
+      <div id="queue-content">
+        <div class="loading">Loading email queue…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL 4 — Constraint Alerts
+       ═══════════════════════════════════════════════════ -->
+  <section class="po-panel" id="panel-alerts">
+    <div class="po-card">
+      <h2>Constraint Alerts</h2>
+      <p class="card-sub">Jobs whose longest-lead-time item has shifted. Notify downstream so commitments adjust before the slip cascades.</p>
+      <div id="alerts-content">
+        <div class="loading">Scanning for shifted constraints…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL 1 — Global Settings (last tab on purpose)
+       ═══════════════════════════════════════════════════ -->
+  <section class="po-panel" id="panel-settings">
+    <div class="po-card">
+      <h2>Global Settings</h2>
+      <p class="card-sub">Timers, auto-send mode, downstream notification target, and keyword list. Changes are staged — the SLS admin must install the returned env vars on Netlify and redeploy to activate.</p>
+
+      <div class="auto-send-row">
+        <div class="label-block">
+          <label for="cfg-auto-send">Auto-send</label>
+          <div class="hint">When on, generated follow-ups send through the customer's mailbox without manual review.</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="cfg-auto-send">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label for="cfg-ack-timer">
+          Acknowledgement timer
+          <span class="hint">Business days from order date before Stage 1 chase fires.</span>
+        </label>
+        <input type="number" id="cfg-ack-timer" min="1" max="30" step="1">
+      </div>
+
+      <div class="field-row">
+        <label for="cfg-follow-up-window">
+          Ship date follow-up window
+          <span class="hint">Days before estimated ship date that Stage 2 ping fires.</span>
+        </label>
+        <input type="number" id="cfg-follow-up-window" min="0" max="30" step="1">
+      </div>
+
+      <div class="field-row">
+        <label for="cfg-gap-days">
+          Min gap between Stage 2 nudges
+          <span class="hint">So we don't pester a vendor more than once every N days.</span>
+        </label>
+        <input type="number" id="cfg-gap-days" min="0" max="30" step="1">
+      </div>
+
+      <div class="field-row">
+        <label for="cfg-notification-target">
+          Downstream notification target
+          <span class="hint">Who receives constraint-shift alerts.</span>
+        </label>
+        <select id="cfg-notification-target">
+          <option value="ops_lead">Ops Lead</option>
+          <option value="plant_manager">Plant Manager</option>
+          <option value="end_customer">End Customer</option>
+          <option value="custom">Custom email</option>
+        </select>
+      </div>
+
+      <div class="field-row" id="custom-email-row" style="display:none;">
+        <label for="cfg-custom-email">
+          Custom notification email
+          <span class="hint">Used when target is "Custom email".</span>
+        </label>
+        <input type="email" id="cfg-custom-email" placeholder="alerts@yourcompany.com">
+      </div>
+
+      <div class="field-row" style="align-items: start;">
+        <label>
+          Inbox keywords
+          <span class="hint">Vendor email subject/body matched against these to flag for parsing.</span>
+        </label>
+        <div>
+          <div style="display:flex; gap:.4rem;">
+            <input type="text" id="new-keyword" placeholder="add keyword…">
+            <button class="po-btn ghost" id="add-keyword-btn">Add</button>
+          </div>
+          <div class="keyword-chips" id="keyword-chips"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:.6rem; margin-top:1.5rem;">
+        <button class="po-btn" id="save-settings-btn">Save Settings</button>
+        <button class="po-btn ghost" id="reload-settings-btn">Discard Changes</button>
+      </div>
+
+      <pre id="env-output" style="display:none; margin-top:1.25rem; background:rgba(0,0,0,.35); padding:1rem; border-radius:6px; font-size:.8rem; overflow:auto; max-height:280px; color:var(--text-primary);"></pre>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast-stack" id="toasts"></div>
+
+</body>
+</html>
